@@ -616,6 +616,9 @@ class Slice(JSONPath):
 
     def find(self, datum):
         datum = DatumInContext.wrap(datum)
+		
+        if datum.value is None:
+            return []
 
         # Here's the hack. If it is a dictionary or some kind of constant,
         # put it in a single-element list
