@@ -27,6 +27,34 @@ OPERATOR_MAP = {
     '>': operator.gt,
 }
 
+def eval_exp(expressions,val):
+            for expression in expressions:
+                if type(expression)==tuple and expression[0]=='|':
+                   val1=eval_exp(expression[1],val)
+                   val2=eval_exp(expression[2],val)
+                   if (val1 or val2):
+                      return True
+                   else:
+                      return False
+                if type(expression)==tuple and expression[0]=='&':
+                   val1=eval_exp(expression[1],val)
+                   val2=eval_exp(expression[2],val)
+                   if (val1 and val2):
+                      return True
+                   else:
+                      return False 
+                if type(expression)==tuple and expression[0]=='!':
+                  val1=eval_exp(expression[1],val)
+                  if (val1):
+                     return False
+                  else:
+                     return True
+                else:
+                   if(len([expression])==len(list(filter(lambda x: x.find(val),[expression])))):
+                      return True
+                   else:
+                      return False
+               
 
 class Filter(JSONPath):
     """The JSONQuery filter"""
@@ -41,12 +69,11 @@ class Filter(JSONPath):
         datum = DatumInContext.wrap(datum)
         if not isinstance(datum.value, list):
             return []
-
-        return [DatumInContext(datum.value[i], path=Index(i), context=datum)
-                for i in moves.range(0, len(datum.value))
-                if (len(self.expressions) ==
-                    len(list(filter(lambda x: x.find(datum.value[i]),
-                                    self.expressions))))]
+        res=[]
+        for i in moves.range(0,len(datum.value)):
+            if eval_exp(self.expressions,datum.value[i]):
+                res.append(DatumInContext(datum.value[i], path=Index(i), context=datum))
+        return(res)      
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.expressions)
@@ -65,7 +92,6 @@ class Expression(JSONPath):
 
     def find(self, datum):
         datum = self.target.find(DatumInContext.wrap(datum))
-
         if not datum:
             return []
         if self.op is None:

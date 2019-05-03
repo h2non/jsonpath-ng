@@ -14,7 +14,6 @@
 from .. import lexer
 from .. import parser
 from .. import Fields, This, Child
-
 from . import arithmetic as _arithmetic
 from . import filter as _filter
 from . import iterable as _iterable
@@ -119,11 +118,18 @@ class ExtentedJsonPathParser(parser.JsonPathParser):
     def p_expressions_expression(self, p):
         "expressions : expression"
         p[0] = [p[1]]
-
+    
+    def p_expressions_not(self, p):
+        "expressions : '!' expressions"
+        p[0]=[('!',p[2])]
+    
     def p_expressions_and(self, p):
         "expressions : expressions '&' expressions"
-        # TODO(sileht): implements '|'
-        p[0] = p[1] + p[3]
+        p[0] = [('&',p[1],p[3])]
+
+    def p_expressions_or(self, p):
+        "expressions : expressions '|' expressions"
+        p[0] = [('|',p[1],p[3])]
 
     def p_expressions_parens(self, p):
         "expressions : '(' expressions ')'"
