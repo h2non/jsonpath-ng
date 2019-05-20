@@ -18,7 +18,7 @@ setuptools.setup(
     packages=['jsonpath_ng', 'jsonpath_ng.bin', 'jsonpath_ng.ext'],
     entry_points={
         'console_scripts': [
-            'jsonpath.py=jsonpath_ng.bin.jsonpath:entry_point'
+            'jsonpath_ng.py=jsonpath_ng.bin.jsonpath:entry_point'
         ],
     },
     test_suite='tests',
