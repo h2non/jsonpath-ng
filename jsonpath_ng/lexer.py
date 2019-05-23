@@ -48,7 +48,7 @@ class JsonPathLexer(object):
     #
     # Anyhow, it is pythonic to give some rope to hang oneself with :-)
 
-    literals = ['*', '.', '[', ']', '(', ')', '$', ',', ':', '|', '&', '!']
+    literals = ['*', '.', '[', ']', '(', ')', '$', ',', ':', '|', '&']
 
     reserved_words = { 'where': 'WHERE' }
 

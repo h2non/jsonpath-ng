@@ -22,12 +22,12 @@ from . import string as _string
 
 class ExtendedJsonPathLexer(lexer.JsonPathLexer):
     """Custom LALR-lexer for JsonPath"""
-    literals = lexer.JsonPathLexer.literals + ['?', '@', '+', '*', '/', '-']
+    literals = lexer.JsonPathLexer.literals + ['?', '@', '+', '*', '/', '-', '!','~']
     tokens = (['BOOL'] +
               parser.JsonPathLexer.tokens +
               ['FILTER_OP', 'SORT_DIRECTION', 'FLOAT'])
-
-    t_FILTER_OP = r'==?|<=|>=|!=|<|>'
+    print "tokens {}".format(tokens)
+    t_FILTER_OP = r'==?|<=|>=|!=|<|>|~='
 
     def t_BOOL(self, t):
         r'true|false'
@@ -93,6 +93,8 @@ class ExtentedJsonPathParser(parser.JsonPathParser):
         "jsonpath : NAMED_OPERATOR"
         if p[1] == 'len':
             p[0] = _iterable.Len()
+        elif p[1] == 'keys':
+            p[0] = _iterable.Keys()
         elif p[1] == 'sorted':
             p[0] = _iterable.SortedThis()
         elif p[1].startswith("split("):

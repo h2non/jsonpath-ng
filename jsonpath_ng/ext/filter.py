@@ -13,9 +13,15 @@
 
 import operator
 from six import moves
+import re
 
 from .. import JSONPath, DatumInContext, Index
 
+def contains(a,b):
+    if re.search(b,a):
+       return True
+    return False
+    
 
 OPERATOR_MAP = {
     '!=': operator.ne,
@@ -25,6 +31,7 @@ OPERATOR_MAP = {
     '<': operator.lt,
     '>=': operator.ge,
     '>': operator.gt,
+    '~=': contains
 }
 
 def eval_exp(expressions,val):
