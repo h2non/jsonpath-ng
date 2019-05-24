@@ -26,7 +26,6 @@ class ExtendedJsonPathLexer(lexer.JsonPathLexer):
     tokens = (['BOOL'] +
               parser.JsonPathLexer.tokens +
               ['FILTER_OP', 'SORT_DIRECTION', 'FLOAT'])
-    print "tokens {}".format(tokens)
     t_FILTER_OP = r'==?|<=|>=|!=|<|>|~='
 
     def t_BOOL(self, t):
