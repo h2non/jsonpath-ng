@@ -35,6 +35,13 @@ class JSONPath(object):
 
         raise NotImplementedError()
 
+    def delete(self, data):
+        """
+        Returns `data` without specified path. Only delete if the specified path exists.
+        """
+
+        raise NotImplementedError()
+
     def filter(self, fn, data):
         """
         Returns `data` with the specified path filtering nodes according
@@ -259,6 +266,11 @@ class Child(JSONPath):
     def update(self, data, val):
         for datum in self.left.find(data):
             self.right.update(datum.value, val)
+        return data
+
+    def delete(self, data):
+        for datum in self.left.find(data):
+            self.right.delete(datum.value)
         return data
 
     def filter(self, fn, data):
@@ -527,6 +539,13 @@ class Fields(JSONPath):
                     val(data[field], data, field)
                 else:
                     data[field] = val
+        return data
+
+    def delete(self, data):
+        """
+        Returns `data` with out  specified path. Only delete if the specified path exists.
+        """
+        del data[self.fields[0]]
         return data
 
     def filter(self, fn, data):
