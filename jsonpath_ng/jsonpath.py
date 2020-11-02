@@ -1,8 +1,13 @@
-from __future__ import unicode_literals, print_function, absolute_import, division, generators, nested_scopes
+from __future__ import (absolute_import, division, generators, nested_scopes,
+                        print_function, unicode_literals)
+
 import logging
+from itertools import *  # noqa
+
 import six
 from six.moves import xrange
-from itertools import *  # noqa
+
+from jsonpath_ng.lexer import JsonPathLexer
 
 # Get logger name
 logger = logging.getLogger(__name__)
@@ -539,7 +544,14 @@ class Fields(JSONPath):
         return data
 
     def __str__(self):
-        return ','.join(map(str, self.fields))
+        # If any JsonPathLexer.literals are included in field name need quotes
+        # This avoids unnecessary quotes to keep strings short.
+        literals = JsonPathLexer.literals
+        # Test each field whether it contains a literal and only then add quotes
+        # The test loops over all literals, could possibly optimize to short circuit if one found
+        fields_as_str = ("'" + str(f) + "'" if any([l in f for l in literals]) else str(f) for f in self.fields)
+        return ','.join(fields_as_str)
+
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, ','.join(map(repr, self.fields)))

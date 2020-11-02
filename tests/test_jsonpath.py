@@ -232,6 +232,8 @@ class TestJsonPath(unittest.TestCase):
     def test_descendants_paths(self):
         self.check_paths([('foo..baz', {'foo': {'baz': 1, 'bing': {'baz': 2}}}, ['foo.baz', 'foo.bing.baz'] )])
 
+    def test_litreals_in_field_names(self):
+        self.check_paths([("A.'a.c'", {'A' : {'a.c': 'd'}}, ["A.'a.c'"])])
 
     #
     # Check the "auto_id_field" feature
