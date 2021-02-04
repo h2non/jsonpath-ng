@@ -63,6 +63,7 @@ class JsonPathParser(object):
         ('left', '|'),
         ('left', '&'),
         ('left', 'WHERE'),
+        ('left', 'WHERENOT'),
     ]
 
     def p_error(self, t):
@@ -72,6 +73,7 @@ class JsonPathParser(object):
         """jsonpath : jsonpath '.' jsonpath
                     | jsonpath DOUBLEDOT jsonpath
                     | jsonpath WHERE jsonpath
+                    | jsonpath WHERENOT jsonpath
                     | jsonpath '|' jsonpath
                     | jsonpath '&' jsonpath"""
         op = p[2]
@@ -82,6 +84,8 @@ class JsonPathParser(object):
             p[0] = Descendants(p[1], p[3])
         elif op == 'where':
             p[0] = Where(p[1], p[3])
+        elif op == 'wherenot':
+            p[0] = WhereNot(p[1], p[3])
         elif op == '|':
             p[0] = Union(p[1], p[3])
         elif op == '&':

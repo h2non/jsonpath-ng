@@ -36,5 +36,6 @@ class TestParser(unittest.TestCase):
         self.check_parse_cases([('foo.baz', Child(Fields('foo'), Fields('baz'))),
                                 ('foo.baz,bizzle', Child(Fields('foo'), Fields('baz', 'bizzle'))),
                                 ('foo where baz', Where(Fields('foo'), Fields('baz'))),
+                                ('foo wherenot baz', WhereNot(Fields('foo'), Fields('baz'))),
                                 ('foo..baz', Descendants(Fields('foo'), Fields('baz'))),
                                 ('foo..baz.bing', Descendants(Fields('foo'), Child(Fields('baz'), Fields('bing'))))])
