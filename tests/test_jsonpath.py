@@ -127,6 +127,16 @@ update_test_cases = (
         {"foo": {"bar": 3, "flag": 1}, "baz": {"bar": 2}},
     ),
     #
+    # WhereNot
+    # --------
+    #
+    (
+        '(* wherenot flag) .. bar',
+        {'foo': {'bar': 1, 'flag': 1}, 'baz': {'bar': 2}},
+        4,
+        {'foo': {'bar': 1, 'flag': 1}, 'baz': {'bar': 4}},
+    ),
+    #
     # Lambdas
     # -------
     #

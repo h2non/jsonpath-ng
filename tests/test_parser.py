@@ -1,6 +1,6 @@
 import pytest
 
-from jsonpath_ng.jsonpath import Child, Descendants, Fields, Index, Slice, Where
+from jsonpath_ng.jsonpath import Child, Descendants, Fields, Index, Slice, Where, WhereNot
 from jsonpath_ng.lexer import JsonPathLexer
 from jsonpath_ng.parser import JsonPathParser
 
@@ -27,6 +27,7 @@ parser_test_cases = (
     ("foo.baz", Child(Fields("foo"), Fields("baz"))),
     ("foo.baz,bizzle", Child(Fields("foo"), Fields("baz", "bizzle"))),
     ("foo where baz", Where(Fields("foo"), Fields("baz"))),
+    ("foo wherenot baz", WhereNot(Fields("foo"), Fields("baz"))),
     ("foo..baz", Descendants(Fields("foo"), Fields("baz"))),
     ("foo..baz.bing", Descendants(Fields("foo"), Child(Fields("baz"), Fields("bing")))),
 )
