@@ -4,12 +4,17 @@ import six
 from six.moves import xrange
 from itertools import *  # noqa
 
+from jsonpath_ng.exceptions import JSONPathError
+
 # Get logger name
 logger = logging.getLogger(__name__)
 
 # Turn on/off the automatic creation of id attributes
 # ... could be a kwarg pervasively but uses are rare and simple today
 auto_id_field = None
+
+NOT_SET = object()
+LIST_KEY = object()
 
 
 class JSONPath(object):
@@ -255,19 +260,22 @@ class Child(JSONPath):
         self.right = right
 
     def find(self, datum, create=False):
-        """
-        Extra special case: auto ids do not have children,
-        so cut it off right now rather than auto id the auto id
-        """
-
-        return [submatch
-                for subdata in self.left.find(datum, create)
-                if not isinstance(subdata, AutoIdForDatum)
-                for submatch in self.right.find(subdata, create)]
+        datum = DatumInContext.wrap(datum)
+        submatches = []
+        for subdata in self.left.find(datum, create):
+            if isinstance(subdata, AutoIdForDatum):
+                # Extra special case: auto ids do not have children,
+                # so cut it off right now rather than auto id the auto id
+                continue
+            for submatch in self.right.find(subdata, create):
+                submatches.append(submatch)
+        return submatches
 
     def update(self, data, val, create=False):
         for datum in self.left.find(data, create):
             self.right.update(datum.value, val, create)
+        if create:
+            data = _clean_list_keys(data)
         return data
 
     def filter(self, fn, data):
@@ -283,6 +291,28 @@ class Child(JSONPath):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.left, self.right)
+
+
+def _clean_list_keys(dict_):
+    """
+    Replace {LIST_KEY: ['foo', 'bar']} with ['foo', 'bar'].
+
+    >>> _clean_list_keys({LIST_KEY: ['foo', 'bar']})
+    ['foo', 'bar']
+
+    """
+    for key, value in dict_.items():
+        if isinstance(value, dict):
+            dict_[key] = _clean_list_keys(value)
+        elif isinstance(value, list):
+            dict_[key] = [_clean_list_keys(v) if isinstance(v, dict) else v
+                          for v in value]
+    if LIST_KEY in dict_:
+        if len(dict_) > 1:
+            raise JSONPathError('Unable to create list without overwriting '
+                                'existing data')
+        return dict_[LIST_KEY]
+    return dict_
 
 
 class Parent(JSONPath):
@@ -503,14 +533,19 @@ class Fields(JSONPath):
     def __init__(self, *fields):
         self.fields = fields
 
-    def get_field_datum(self, datum, field):
+    def get_field_datum(self, datum, field, create):
         if field == auto_id_field:
             return AutoIdForDatum(datum)
         else:
             try:
-                field_value = datum.value[field] # Do NOT use `val.get(field)` since that confuses None as a value and None due to `get`
+                field_value = datum.value.get(field, NOT_SET)
+                if field_value is NOT_SET:
+                    if create:
+                        datum.value[field] = field_value = {}
+                    else:
+                        return None
                 return DatumInContext(value=field_value, path=Fields(field), context=datum)
-            except (TypeError, KeyError, AttributeError):
+            except (TypeError, AttributeError):
                 return None
 
     def reified_fields(self, datum):
@@ -525,14 +560,17 @@ class Fields(JSONPath):
 
     def find(self, datum, create=False):
         datum  = DatumInContext.wrap(datum)
-
         return  [field_datum
-                 for field_datum in [self.get_field_datum(datum, field) for field in self.reified_fields(datum)]
+                 for field_datum in [
+                     self.get_field_datum(datum, field, create)
+                     for field in self.reified_fields(datum)]
                  if field_datum is not None]
 
     def update(self, data, val, create=False):
         if data is not None:
             for field in self.reified_fields(DatumInContext.wrap(data)):
+                if field not in data and create:
+                    data[field] = {}
                 if field in data:
                     if hasattr(val, '__call__'):
                         val(data[field], data, field)
@@ -572,13 +610,20 @@ class Index(JSONPath):
 
     def find(self, datum, create=False):
         datum = DatumInContext.wrap(datum)
-
+        if create:
+            if datum.value == {}:
+                datum.value = self._create_list_key(datum.value)
+            self._pad_value(datum.value)
         if datum.value and len(datum.value) > self.index:
             return [DatumInContext(datum.value[self.index], path=self, context=datum)]
         else:
             return []
 
     def update(self, data, val, create=False):
+        if create:
+            if data == {}:
+                data = self._create_list_key(data)
+            self._pad_value(data)
         if hasattr(val, '__call__'):
             val.__call__(data[self.index], data, self.index)
         elif len(data) > self.index:
@@ -593,8 +638,21 @@ class Index(JSONPath):
     def __eq__(self, other):
         return isinstance(other, Index) and self.index == other.index
 
+    def __repr__(self):
+        return '%s(index=%r)' % (self.__class__.__name__, self.index)
+
     def __str__(self):
         return '[%i]' % self.index
+
+    def _create_list_key(self, dict_):
+        # Update value by reference. See `_clean_list_keys()`
+        dict_[LIST_KEY] = new_list = [{}]
+        return new_list
+
+    def _pad_value(self, value):
+        if len(value) <= self.index:
+            pad = self.index - len(value) + 1
+            value += [{} for __ in range(pad)]
 
 
 class Slice(JSONPath):
