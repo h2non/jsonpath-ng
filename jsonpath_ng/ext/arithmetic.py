@@ -29,12 +29,12 @@ class Operation(JSONPath):
         self.op = OPERATOR_MAP[op]
         self.right = right
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         result = []
         if (isinstance(self.left, JSONPath)
                 and isinstance(self.right, JSONPath)):
-            left = self.left.find(datum)
-            right = self.right.find(datum)
+            left = self.left.find(datum, create)
+            right = self.right.find(datum, create)
             if left and right and len(left) == len(right):
                 for l, r in zip(left, right):
                     try:
@@ -44,14 +44,14 @@ class Operation(JSONPath):
             else:
                 return []
         elif isinstance(self.left, JSONPath):
-            left = self.left.find(datum)
+            left = self.left.find(datum, create)
             for l in left:
                 try:
                     result.append(self.op(l.value, self.right))
                 except TypeError:
                     return []
         elif isinstance(self.right, JSONPath):
-            right = self.right.find(datum)
+            right = self.right.find(datum, create)
             for r in right:
                 try:
                     result.append(self.op(self.left, r.value))

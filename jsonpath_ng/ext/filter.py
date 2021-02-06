@@ -36,7 +36,7 @@ class Filter(JSONPath):
     def __init__(self, expressions):
         self.expressions = expressions
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         if not self.expressions:
             return datum
 
@@ -51,13 +51,15 @@ class Filter(JSONPath):
         return [DatumInContext(datum.value[i], path=Index(i), context=datum)
                 for i in moves.range(0, len(datum.value))
                 if (len(self.expressions) ==
-                    len(list(filter(lambda x: x.find(datum.value[i]),
+                    len(list(filter(lambda x: x.find(datum.value[i], create),
                                     self.expressions))))]
 
-    def update(self, data, val):
+    def update(self, data, val, create=False):
         if type(data) is list:
             for index, item in enumerate(data):
-                shouldUpdate = len(self.expressions) == len(list(filter(lambda x: x.find(item), self.expressions)))
+                shouldUpdate = (len(self.expressions) ==
+                                len(list(filter(lambda x: x.find(item, create),
+                                                self.expressions))))
                 if shouldUpdate:
                     if hasattr(val, '__call__'):
                         val.__call__(data[index], data, index)
@@ -80,8 +82,8 @@ class Expression(JSONPath):
         self.op = op
         self.value = value
 
-    def find(self, datum):
-        datum = self.target.find(DatumInContext.wrap(datum))
+    def find(self, datum, create=False):
+        datum = self.target.find(DatumInContext.wrap(datum), create)
 
         if not datum:
             return []

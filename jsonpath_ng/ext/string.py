@@ -39,7 +39,7 @@ class Sub(This):
         self.regex = re.compile(self.expr)
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         datum = DatumInContext.wrap(datum)
         value = self.regex.sub(self.repl, datum.value)
         if value == datum.value:
@@ -72,7 +72,7 @@ class Split(This):
         self.max_split = int(m.group(3))
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         datum = DatumInContext.wrap(datum)
         try:
             value = datum.value.split(self.char, self.max_split)[self.segment]
@@ -102,7 +102,7 @@ class Str(This):
             raise DefintionInvalid("%s is not valid" % method)
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         datum = DatumInContext.wrap(datum)
         value = str(datum.value)
         return [DatumInContext.wrap(value)]

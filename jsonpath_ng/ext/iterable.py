@@ -43,7 +43,7 @@ class SortedThis(This):
                 return -1 if reverse else 1
         return 0
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         """Return sorted value of This if list or dict."""
         if isinstance(datum.value, dict) and self.expressions:
             return datum
@@ -71,7 +71,7 @@ class Len(JSONPath):
     Concrete syntax is '`len`'.
     """
 
-    def find(self, datum):
+    def find(self, datum, create=False):
         datum = DatumInContext.wrap(datum)
         try:
             value = len(datum.value)
