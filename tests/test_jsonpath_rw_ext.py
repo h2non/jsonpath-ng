@@ -114,6 +114,14 @@ class Testjsonpath_ng_ext(testscenarios.WithScenarios,
             },
             target=['Bad']
         )),
+        ('filter_dict', dict(string="$.numbers[?(@.cow=='moo')]",
+                             data={'numbers': {
+                                   'foo': {'cow': 'moo'},
+                                   'bar': {'cow': 'other'}}},
+                             target=[{'cow': 'moo'}])),
+        ('filter_root_element', dict(string='$[?(@.foo=42)]',
+                                     data={"foo": 42},
+                                     target=[{"foo": 42}])),
         ('sort1', dict(string='objects[/cow]',
                        data={'objects': [{'cat': 1, 'cow': 2},
                                          {'cat': 2, 'cow': 1},
@@ -296,12 +304,6 @@ class Testjsonpath_ng_ext(testscenarios.WithScenarios,
             string='foo[?(@.baz==1)]',
             data={'foo': [{'baz': 1}, {'baz': 2}]},
             target=[{'baz': 1}],
-        )),
-
-        ('bug-#2-wrong', dict(
-            string='foo[*][?(@.baz==1)]',
-            data={'foo': [{'baz': 1}, {'baz': 2}]},
-            target=[],
         )),
 
         ('boolean-filter-true', dict(

@@ -42,8 +42,17 @@ class Filter(JSONPath):
 
         datum = DatumInContext.wrap(datum)
 
+        # Create multiple branches to try in case of objects. As the
+        # specification is pretty lose on how to access dictionaries with
+        # square brackets, provide both options on how to process objects.
+        # The first part of the expansions allows filtering dictionaries by
+        # their value objects as implemented in
+        # https://github.com/h2non/jsonpath-ng/pull/41
+        # The second part allows filtering objects by providing their keys to
+        # filter expressions as requested in
+        # https://github.com/h2non/jsonpath-ng/issues/66
         if isinstance(datum.value, dict):
-            datum.value = list(datum.value.values())
+            datum.value = list(datum.value.values()) + [datum.value]
 
         if not isinstance(datum.value, list):
             return []
