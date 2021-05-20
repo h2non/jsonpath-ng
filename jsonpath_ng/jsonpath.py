@@ -502,7 +502,7 @@ class Fields(JSONPath):
             return AutoIdForDatum(datum)
         else:
             try:
-                field_value = datum.value[field] # Do NOT use `val.get(field)` since that confuses None as a value and None due to `get`
+                field_value = getattr(datum.value, field)
                 return DatumInContext(value=field_value, path=Fields(field), context=datum)
             except (TypeError, KeyError, AttributeError):
                 return None
@@ -527,17 +527,17 @@ class Fields(JSONPath):
     def update(self, data, val):
         if data is not None:
             for field in self.reified_fields(DatumInContext.wrap(data)):
-                if field in data:
+                if hasattr(data, field):
                     if hasattr(val, '__call__'):
-                        val(data[field], data, field)
+                        val(getattr(data, field), data, field)
                     else:
-                        data[field] = val
+                        setattr(data, field, val)
         return data
 
     def filter(self, fn, data):
         if data is not None:
             for field in self.reified_fields(DatumInContext.wrap(data)):
-                if field in data:
+                if hasattr(data, field):
                     if fn(data[field]):
                         data.pop(field)
         return data
