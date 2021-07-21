@@ -202,9 +202,9 @@ Extensions
 |              | - $.objects[\\some_field,/other_field]       |
 +--------------+----------------------------------------------+
 | filter       | - $.objects[?(@some_field > 5)]              |
-|              | - $.objects[?some_field = "foobar")]         |
-|              | - $.objects[?some_field =~ "foobar")]        |
-|              | - $.objects[?some_field > 5 & other < 2)]    |
+|              | - $.objects[?(some_field = "foobar")]         |
+|              | - $.objects[?(some_field =~ "foobar")]        |
+|              | - $.objects[?(some_field > 5 & other < 2)]    |
 +--------------+----------------------------------------------+
 | arithmetic   | - $.foo + "_" + $.bar                        |
 | (-+*/)       | - $.foo * 12                                 |
