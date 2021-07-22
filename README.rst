@@ -178,7 +178,7 @@ Extras
    will be replaced by the JSONPath to it, giving automatic unique ids
    to any piece of data. These ids will take into account any ids
    already present as well.
--  *Named operators*: Instead of using ``@`` to reference the currently
+-  *Named operators*: Instead of using ``@`` to reference the current
    object, this library uses ```this```. In general, any string
    contained in backquotes can be made to be a new operator, currently
    by extending the library.
