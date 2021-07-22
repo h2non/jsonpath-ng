@@ -597,9 +597,9 @@ class Fields(JSONPath):
     def _update_base(self, data, val, create):
         if data is not None:
             for field in self.reified_fields(DatumInContext.wrap(data)):
-                if field not in data and create:
+                if create and field not in data:
                     data[field] = {}
-                if field in data:
+                if type(data) is not bool and field in data:
                     if hasattr(val, '__call__'):
                         data[field] = val(data[field], data, field)
                     else:
