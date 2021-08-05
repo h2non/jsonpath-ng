@@ -42,10 +42,7 @@ class Sub(This):
     def find(self, datum):
         datum = DatumInContext.wrap(datum)
         value = self.regex.sub(self.repl, datum.value)
-        if value == datum.value:
-            return []
-        else:
-            return [DatumInContext.wrap(value)]
+        return [DatumInContext.wrap(value)]
 
     def __eq__(self, other):
         return (isinstance(other, Sub) and self.method == other.method)
