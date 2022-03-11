@@ -195,7 +195,7 @@ Extensions
 | sub          | - $.field.`sub(/foo\\\\+(.*)/, \\\\1)`       |
 +--------------+----------------------------------------------+
 | split        | - $.field.`split(+, 2, -1)`                  |
-|              | - $.field.`split(sep, segement, maxsplit)`   |
+|              | - $.field.`split(sep, segment, maxsplit)`    |
 +--------------+----------------------------------------------+
 | sorted       | - $.objects.`sorted`                         |
 |              | - $.objects[\\some_field]                    |
