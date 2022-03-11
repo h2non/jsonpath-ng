@@ -291,6 +291,16 @@ class Testjsonpath_ng_ext(testscenarios.WithScenarios,
             data={'payload': "foo-bar-cat-bow"},
             target=["cat-bow"]
         )),
+        ('split3', dict(
+            string='payload.`split(-, -2, -1)`',
+            data={'payload': "foo-bar-cat-bow"},
+            target=["cat"]
+        )),
+        ('split4', dict(
+            string='payload.`split(-, -2, 2)`',
+            data={'payload': "foo-bar-cat-bow"},
+            target=["bar"]
+        )),
 
         ('bug-#2-correct', dict(
             string='foo[?(@.baz==1)]',

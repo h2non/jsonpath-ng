@@ -16,7 +16,7 @@ from .. import DatumInContext, This
 
 
 SUB = re.compile("sub\(/(.*)/,\s+(.*)\)")
-SPLIT = re.compile("split\((.),\s+(\d+),\s+(\d+|-1)\)")
+SPLIT = re.compile("split\((.),\s+(-?\d+),\s+(\d+|-1)\)")
 STR = re.compile("str\(\)")
 
 
