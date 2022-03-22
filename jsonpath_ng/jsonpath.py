@@ -574,7 +574,7 @@ class Fields(JSONPath):
                     data[field] = {}
                 if field in data:
                     if hasattr(val, '__call__'):
-                        val(data[field], data, field)
+                        data[field] = val(data[field], data, field)
                     else:
                         data[field] = val
         return data
@@ -638,7 +638,7 @@ class Index(JSONPath):
                 data = _create_list_key(data)
             self._pad_value(data)
         if hasattr(val, '__call__'):
-            val.__call__(data[self.index], data, self.index)
+            data[self.index] = val.__call__(data[self.index], data, self.index)
         elif len(data) > self.index:
             data[self.index] = val
         return data
