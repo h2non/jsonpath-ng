@@ -24,6 +24,7 @@ class TestParser(unittest.TestCase):
                                 ('*', Fields('*')),
                                 ('baz,bizzle', Fields('baz','bizzle')),
                                 ('[1]', Index(1)),
+                                ('[0,2,3]', Index(0,2,3)),
                                 ('[1:]', Slice(start=1)),
                                 ('[:]', Slice()),
                                 ('[*]', Slice()),

@@ -32,8 +32,9 @@ from jsonpath_ng.jsonpath import *
      Child(Descendants(Root(), Fields('book')), Slice(start=-1))),
 
     # The first two books
-    # ("$..book[0,1]",  # Not implemented
-    #  Child(Descendants(Root(), Fields('book')), Slice(end=2))),
+    ("$..book[0,1]",
+     Child(Descendants(Root(), Fields('book')), Index(0,1))),
+
     ("$..book[:2]",
      Child(Descendants(Root(), Fields('book')), Slice(end=2))),
 

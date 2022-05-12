@@ -625,7 +625,7 @@ class Index(JSONPath):
         for index in self.indices:
             # invalid indices do not crash, return [] instead
             if datum.value and len(datum.value) > index:
-                rv += [DatumInContext(datum.value[index], path=self, context=datum)]
+                rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
 
     def update(self, data, val):
@@ -646,6 +646,7 @@ class Index(JSONPath):
             if not isinstance(val, list):
                 val = [val] 
             # allows somelist[5,1,2] = [some_value, another_value, third_value]
+            # skip the indices that are too high but the value will be applied to the next index
             for index in self.indices:
                 if len(data) > index:
                     data[index] = val.pop(0)
@@ -661,7 +662,7 @@ class Index(JSONPath):
         return isinstance(other, Index) and sorted(self.indices) == sorted(other.indices)
 
     def __str__(self):
-        return '[%i]' % self.indices
+        return str(list(self.indices))
 
     def __repr__(self):
         return '%s(indices=%r)' % (self.__class__.__name__, self.indices)
@@ -718,7 +719,7 @@ class Slice(JSONPath):
             return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in xrange(0, len(datum.value))]
         else:
             return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in range(0, len(datum.value))[self.start:self.end:self.step]]
-
+            
     def update(self, data, val):
         for datum in self.find(data):
             datum.path.update(data, val)

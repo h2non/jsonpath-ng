@@ -31,6 +31,11 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            insert_val=42,
            target={'foo': [{}, 42]}),
 
+    Params(string='$.foo[1,3]',
+           initial_data={},
+           insert_val=[42, 51],
+           target={'foo': [{}, 42, {}, 51]}),
+
     Params(string='$.foo[0].bar',
            initial_data={},
            insert_val=42,
@@ -40,6 +45,12 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            initial_data={},
            insert_val=42,
            target={'foo': [{}, {'bar': 42}]}),
+
+    # Note that each field will received the full <insert_val>
+    Params(string='$.foo[1,3].bar',
+           initial_data={},
+           insert_val=[42, 51],
+           target={'foo': [{}, {'bar': [42, 51]}, {}, {'bar': [42, 51]}]}),
 
     Params(string='$.foo[0][0]',
            initial_data={},
@@ -51,6 +62,22 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            insert_val=42,
            target={'foo': [{}, [{}, 42]]}),
 
+    # But here Note that each index will received one value of <insert_val>
+    Params(string='$.foo[1,3][1]',
+           initial_data={},
+           insert_val=[42, 51],
+           target={'foo': [{}, [{}, 42], {}, [{}, 51]]}),
+
+    Params(string='$.foo[1,3][1]',
+           initial_data={},
+           insert_val=[[42, 51], [42, 51]],
+           target={'foo': [{}, [{}, [42, 51]], {}, [{}, [42, 51]]]}),
+
+    Params(string='$.foo[1,3][0,2]',
+           initial_data={},
+           insert_val=[42, 51, 42, 51],
+           target={'foo': [{}, [42, {}, 51], {}, [42, {}, 51]]}),
+
     Params(string='foo[0]',
            initial_data={},
            insert_val=42,
@@ -60,6 +87,11 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            initial_data={},
            insert_val=42,
            target={'foo': [{}, 42]}),
+
+    Params(string='foo[1,3]',
+           initial_data={},
+           insert_val=[42, 51],
+           target={'foo': [{}, 42, {}, 51]}),
 
     Params(string='foo',
            initial_data={},
@@ -77,6 +109,11 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            insert_val=42,
            target=[{}, 42]),
 
+    Params(string='[1,3]',
+           initial_data=[],
+           insert_val=[42, 51],
+           target=[{}, 42, {}, 51]),
+
     # Converts initial data to a list if necessary
     Params(string='[0]',
            initial_data={},
@@ -87,6 +124,11 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
            initial_data={},
            insert_val=42,
            target=[{}, 42]),
+
+    Params(string='[1,3]',
+           initial_data={},
+           insert_val=[42, 51],
+           target=[{}, 42, {}, 51]),
 
     Params(string='foo[?bar="baz"].qux',
            initial_data={'foo': [
@@ -126,6 +168,14 @@ def test_update_or_create(string, initial_data, insert_val, target):
            insert_val=42,
            target={'foo': 42}),
     # raises TypeError
+
+    # more indices than values to insert
+    Params(string='$.foo[1,2,3]',
+           initial_data={},
+           insert_val=[42, 51],
+           target={'foo': [{}, 42, 51, {}]}),
+    # raises IndexError
+
 
 ])
 @pytest.mark.xfail
