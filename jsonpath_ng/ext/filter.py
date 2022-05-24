@@ -54,6 +54,16 @@ class Filter(JSONPath):
                     len(list(filter(lambda x: x.find(datum.value[i]),
                                     self.expressions))))]
 
+    def filter(self, fn, data):
+        # NOTE: We reverse the order just to make sure the indexes are preserved upon
+        #  removal.
+        for datum in reversed(self.find(data)):
+            index_obj = datum.path
+            if isinstance(data, dict):
+                index_obj.index = list(data)[index_obj.index]
+            index_obj.filter(fn, data)
+        return data
+
     def update(self, data, val):
         if type(data) is list:
             for index, item in enumerate(data):

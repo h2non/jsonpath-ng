@@ -470,6 +470,14 @@ class TestJsonPath(base.BaseTestCase):
             else:
                 assert str(result.path) == target
 
+    def test_filter_with_filtering(self):
+        data = {"foos": [{"id": 1, "name": "first"}, {"id": 2, "name": "second"}]}
+        result = parser.parse('$.foos[?(@.name=="second")]').filter(
+            lambda _: True, data
+        )
+        names = [item["name"] for item in result["foos"]]
+        assert "second" not in names
+
     def test_fields_paths(self):
         jsonpath.auto_id_field = None
         self.check_paths([('foo', {'foo': 'baz'}, ['foo']),
