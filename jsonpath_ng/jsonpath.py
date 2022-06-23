@@ -798,7 +798,7 @@ def _create_list_key(dict_):
     return new_list
 
 
-def _clean_list_keys(dict_):
+def _clean_list_keys(struct_):
     """
     Replace {LIST_KEY: ['foo', 'bar']} with ['foo', 'bar'].
 
@@ -806,12 +806,13 @@ def _clean_list_keys(dict_):
     ['foo', 'bar']
 
     """
-    for key, value in dict_.items():
-        if isinstance(value, dict):
-            dict_[key] = _clean_list_keys(value)
-        elif isinstance(value, list):
-            dict_[key] = [_clean_list_keys(v) if isinstance(v, dict) else v
-                          for v in value]
-    if LIST_KEY in dict_:
-        return dict_[LIST_KEY]
-    return dict_
+    if(isinstance(struct_, list)):
+        for ind, value in enumerate(struct_):
+            struct_[ind] = _clean_list_keys(value)
+    elif(isinstance(struct_, dict)):
+        if(LIST_KEY in struct_):
+            return _clean_list_keys(struct_[LIST_KEY])
+        else:
+            for key, value in struct_.items():
+                struct_[key] = _clean_list_keys(value)
+    return struct_
