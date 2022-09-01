@@ -71,6 +71,7 @@ class JsonPathParser(object):
     precedence = [
         ('left', ','),
         ('left', 'DOUBLEDOT'),
+        ('left', 'LENGTH'),
         ('left', '.'),
         ('left', '|'),
         ('left', '&'),
@@ -80,6 +81,10 @@ class JsonPathParser(object):
     def p_error(self, t):
         raise JsonPathParserError('Parse error at %s:%s near token %s (%s)'
                                   % (t.lineno, t.col, t.value, t.type))
+
+    def p_length(self, p):
+        """jsonpath : jsonpath LENGTH"""
+        p[0] = len(p[1])
 
     def p_jsonpath_binop(self, p):
         """jsonpath : jsonpath '.' jsonpath
