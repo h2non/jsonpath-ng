@@ -192,6 +192,8 @@ Extensions
 +==============+==============================================+
 | len          | - $.objects.`len`                            |
 +--------------+----------------------------------------------+
+| keys         | - $.dict_field.`keys`(returns a list of keys)|
++--------------+----------------------------------------------+
 | sub          | - $.field.`sub(/foo\\\\+(.*)/, \\\\1)`       |
 +--------------+----------------------------------------------+
 | split        | - $.field.`split(+, 2, -1)`                  |
@@ -203,8 +205,10 @@ Extensions
 +--------------+----------------------------------------------+
 | filter       | - $.objects[?(@some_field > 5)]              |
 |              | - $.objects[?some_field = "foobar")]         |
-|              | - $.objects[?some_field =~ "foobar")]        |
-|              | - $.objects[?some_field > 5 & other < 2)]    |
+|              | - $.objects[?some_field > 5 & other < 2)] and|
+|              | - $.objects[?some_field>5 |some_field<2)] or |
+|              | - $.objects[?(!(field>5 | field<2))]      not|
+|              | - $.objects[?@.field ~= "a.+a"]         regex|
 +--------------+----------------------------------------------+
 | arithmetic   | - $.foo + "_" + $.bar                        |
 | (-+*/)       | - $.foo * 12                                 |
