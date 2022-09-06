@@ -14,9 +14,15 @@
 import operator
 import re
 from six import moves
+import re
 
 from .. import JSONPath, DatumInContext, Index
 
+def contains(a,b):
+    if re.search(b,a):
+       return True
+    return False
+    
 
 OPERATOR_MAP = {
     '!=': operator.ne,
@@ -26,9 +32,37 @@ OPERATOR_MAP = {
     '<': operator.lt,
     '>=': operator.ge,
     '>': operator.gt,
-    '=~': lambda a, b: True if re.search(b, a) else False,
+    '~=': contains
 }
 
+def eval_exp(expressions,val):
+            for expression in expressions:
+                if type(expression)==tuple and expression[0]=='|':
+                   val1=eval_exp(expression[1],val)
+                   val2=eval_exp(expression[2],val)
+                   if (val1 or val2):
+                      return True
+                   else:
+                      return False
+                if type(expression)==tuple and expression[0]=='&':
+                   val1=eval_exp(expression[1],val)
+                   val2=eval_exp(expression[2],val)
+                   if (val1 and val2):
+                      return True
+                   else:
+                      return False 
+                if type(expression)==tuple and expression[0]=='!':
+                  val1=eval_exp(expression[1],val)
+                  if (val1):
+                     return False
+                  else:
+                     return True
+                else:
+                   if(len([expression])==len(list(filter(lambda x: x.find(val),[expression])))):
+                      return True
+                   else:
+                      return False
+               
 
 class Filter(JSONPath):
     """The JSONQuery filter"""
@@ -47,12 +81,11 @@ class Filter(JSONPath):
 
         if not isinstance(datum.value, list):
             return []
-
-        return [DatumInContext(datum.value[i], path=Index(i), context=datum)
-                for i in moves.range(0, len(datum.value))
-                if (len(self.expressions) ==
-                    len(list(filter(lambda x: x.find(datum.value[i]),
-                                    self.expressions))))]
+        res=[]
+        for i in moves.range(0,len(datum.value)):
+            if eval_exp(self.expressions,datum.value[i]):
+                res.append(DatumInContext(datum.value[i], path=Index(i), context=datum))
+        return(res)      
 
     def update(self, data, val):
         if type(data) is list:
@@ -86,7 +119,6 @@ class Expression(JSONPath):
 
     def find(self, datum):
         datum = self.target.find(DatumInContext.wrap(datum))
-
         if not datum:
             return []
         if self.op is None:

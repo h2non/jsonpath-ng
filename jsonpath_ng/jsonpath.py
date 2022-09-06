@@ -606,8 +606,8 @@ class Index(JSONPath):
     NOTE: For the concrete syntax of `[*]`, the abstract syntax is a Slice() with no parameters (equiv to `[:]`
     """
 
-    def __init__(self, index):
-        self.index = index
+    def __init__(self, *indices):
+        self.indices = indices
 
     def find(self, datum):
         return self._find_base(datum, create=False)
@@ -621,10 +621,12 @@ class Index(JSONPath):
             if datum.value == {}:
                 datum.value = _create_list_key(datum.value)
             self._pad_value(datum.value)
-        if datum.value and len(datum.value) > self.index:
-            return [DatumInContext(datum.value[self.index], path=self, context=datum)]
-        else:
-            return []
+        rv = []
+        for index in self.indices:
+            # invalid indices do not crash, return [] instead
+            if datum.value and len(datum.value) > index:
+                rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
+        return rv
 
     def update(self, data, val):
         return self._update_base(data, val, create=False)
@@ -638,30 +640,38 @@ class Index(JSONPath):
                 data = _create_list_key(data)
             self._pad_value(data)
         if hasattr(val, '__call__'):
-            val.__call__(data[self.index], data, self.index)
-        elif len(data) > self.index:
-            data[self.index] = val
+            for index in self.indices:
+                val.__call__(data[index], data, index)
+        else:
+            if not isinstance(val, list):
+                val = [val] 
+            # allows somelist[5,1,2] = [some_value, another_value, third_value]
+            # skip the indices that are too high but the value will be applied to the next index
+            for index in self.indices:
+                if len(data) > index:
+                    data[index] = val.pop(0)
         return data
 
     def filter(self, fn, data):
-        if fn(data[self.index]):
-            data.pop(self.index)  # relies on mutation :(
+        for index in self.indices:
+            if fn(data[index]):
+                data.pop(index)  # relies on mutation :(
         return data
 
     def __eq__(self, other):
-        return isinstance(other, Index) and self.index == other.index
+        return isinstance(other, Index) and sorted(self.indices) == sorted(other.indices)
 
     def __str__(self):
-        return '[%i]' % self.index
+        return str(list(self.indices))
 
     def __repr__(self):
-        return '%s(index=%r)' % (self.__class__.__name__, self.index)
+        return '%s(indices=%r)' % (self.__class__.__name__, self.indices)
 
     def _pad_value(self, value):
-        if len(value) <= self.index:
-            pad = self.index - len(value) + 1
+        _max = max(self.indices)
+        if len(value) <= _max:
+            pad = _max - len(value) + 1
             value += [{} for __ in range(pad)]
-
 
 class Slice(JSONPath):
     """
@@ -709,7 +719,7 @@ class Slice(JSONPath):
             return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in xrange(0, len(datum.value))]
         else:
             return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in range(0, len(datum.value))[self.start:self.end:self.step]]
-
+            
     def update(self, data, val):
         for datum in self.find(data):
             datum.path.update(data, val)

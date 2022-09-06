@@ -14,7 +14,6 @@
 from .. import lexer
 from .. import parser
 from .. import Fields, This, Child
-
 from . import arithmetic as _arithmetic
 from . import filter as _filter
 from . import iterable as _iterable
@@ -23,12 +22,11 @@ from . import string as _string
 
 class ExtendedJsonPathLexer(lexer.JsonPathLexer):
     """Custom LALR-lexer for JsonPath"""
-    literals = lexer.JsonPathLexer.literals + ['?', '@', '+', '*', '/', '-']
+    literals = lexer.JsonPathLexer.literals + ['?', '@', '+', '*', '/', '-', '!','~']
     tokens = (['BOOL'] +
               parser.JsonPathLexer.tokens +
               ['FILTER_OP', 'SORT_DIRECTION', 'FLOAT'])
-
-    t_FILTER_OP = r'=~|==?|<=|>=|!=|<|>'
+    t_FILTER_OP = r'==?|<=|>=|!=|<|>|~='
 
     def t_BOOL(self, t):
         r'true|false'
@@ -94,6 +92,8 @@ class ExtentedJsonPathParser(parser.JsonPathParser):
         "jsonpath : NAMED_OPERATOR"
         if p[1] == 'len':
             p[0] = _iterable.Len()
+        elif p[1] == 'keys':
+            p[0] = _iterable.Keys()
         elif p[1] == 'sorted':
             p[0] = _iterable.SortedThis()
         elif p[1].startswith("split("):
@@ -121,11 +121,18 @@ class ExtentedJsonPathParser(parser.JsonPathParser):
     def p_expressions_expression(self, p):
         "expressions : expression"
         p[0] = [p[1]]
-
+    
+    def p_expressions_not(self, p):
+        "expressions : '!' expressions"
+        p[0]=[('!',p[2])]
+    
     def p_expressions_and(self, p):
         "expressions : expressions '&' expressions"
-        # TODO(sileht): implements '|'
-        p[0] = p[1] + p[3]
+        p[0] = [('&',p[1],p[3])]
+
+    def p_expressions_or(self, p):
+        "expressions : expressions '|' expressions"
+        p[0] = [('|',p[1],p[3])]
 
     def p_expressions_parens(self, p):
         "expressions : '(' expressions ')'"
