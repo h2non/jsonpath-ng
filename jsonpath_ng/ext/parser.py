@@ -11,6 +11,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
+# NOTICE:
 # modified by dlacher to support predicate logic: https://github.com/h2non/jsonpath-ng/pull/21
 
 from .. import lexer
