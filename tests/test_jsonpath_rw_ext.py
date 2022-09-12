@@ -11,6 +11,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+#
+# modified by dlacher to support predicate logic: https://github.com/h2non/jsonpath-ng/pull/21
 
 """
 test_jsonpath_ng_ext

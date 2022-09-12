@@ -10,6 +10,10 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+#
+# NOTICE:
+# modified by dlacher to support predicate logic: https://github.com/h2non/jsonpath-ng/pull/21
+#
 
 import functools
 from .. import This, DatumInContext, JSONPath
