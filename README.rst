@@ -1,3 +1,5 @@
+NOTE: This library is modified to support the [Document API in Python](https://github.com/aerospike/document-lib-python)
+
 Python JSONPath Next-Generation |Build Status| |PyPI|
 =====================================================
 
