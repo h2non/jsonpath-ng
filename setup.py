@@ -3,16 +3,16 @@ import setuptools
 
 
 setuptools.setup(
-    name='jsonpath-ng',
+    name='jsonpath-ng-aerospike',
     version='1.5.3',
     description=(
-        'A final implementation of JSONPath for Python that aims to be ' 
+        'A final implementation of JSONPath for Python that aims to be '
         'standard compliant, including arithmetic and binary comparison '
         'operators and providing clear AST for metaprogramming.'
     ),
-    author='Tomas Aparicio',
-    author_email='tomas@aparicio.me',
-    url='https://github.com/h2non/jsonpath-ng',
+    author='Tomas Aparicio, Julian Nguyen',
+    author_email='tomas@aparicio.me, jnguyen@aerospike.com',
+    url='https://github.com/aerospike-community/jsonpath-ng',
     license='Apache 2.0',
     long_description=io.open('README.rst', encoding='utf-8').read(),
     packages=['jsonpath_ng', 'jsonpath_ng.bin', 'jsonpath_ng.ext'],
