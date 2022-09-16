@@ -1,0 +1,14 @@
+Files modified by dlacher to support predicate logic (https://github.com/h2non/jsonpath-ng/pull/21):
+- jsonpath_ng/ext/filter.py
+- jsonpath_ng/ext/iterable.py
+- jsonpath_ng/ext/parser.py
+- tests/test_jsonpath_rw_ext.py
+
+Files modified by elrandira to support commas for index accesses and steps in slices
+(https://github.com/h2non/jsonpath-ng/pull/102):
+- jsonpath_ng/jsonpath.py
+- jsonpath_ng/parser.py
+- tests/test_create.py
+- tests/test_examples.py
+- tests/test_jsonpath.py
+- tests/test_parser.py
