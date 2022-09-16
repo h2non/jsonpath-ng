@@ -1,4 +1,4 @@
-NOTE: This library is modified to support the `Document API in Python <https://github.com/aerospike/document-lib-python>`__.
+NOTE: This library is modified to support the `Document API in Python <https://github.com/aerospike/document-lib-python>`_.
 
 Python JSONPath Next-Generation |Build Status| |PyPI|
 =====================================================
@@ -206,10 +206,10 @@ Extensions
 |              | - $.objects[\\some_field,/other_field]       |
 +--------------+----------------------------------------------+
 | filter       | - $.objects[?(@some_field > 5)]              |
-|              | - $.objects[?some_field = "foobar")]         |
-|              | - $.objects[?some_field > 5 & other < 2)] and|
-|              | - $.objects[?some_field>5 |some_field<2)] or |
-|              | - $.objects[?(!(field>5 | field<2))]      not|
+|              | - $.objects[?some_field = "foobar"]          |
+|              | - $.objects[?some_field > 5 & other < 2]  and|
+|              | - $.objects[?some_field>5 \|some_field<2] or |
+|              | - $.objects[?(!(field>5 \| field<2))]     not|
 |              | - $.objects[?@.field ~= "a.+a"]         regex|
 +--------------+----------------------------------------------+
 | arithmetic   | - $.foo + "_" + $.bar                        |
