@@ -335,6 +335,13 @@ class TestJsonPath(unittest.TestCase):
              {'foo': {'bar': 3, 'flag': 1}, 'baz': {'bar': 2}})
         ])
 
+    def test_update_descendants_wherenot(self):
+        self.check_update_cases([
+            ({'foo': {'bar': 1, 'flag': 1}, 'baz': {'bar': 2}},
+             '(* wherenot flag) .. bar', 4,
+             {'foo': {'bar': 1, 'flag': 1}, 'baz': {'bar': 4}})
+        ])
+
     def test_update_descendants(self):
         self.check_update_cases([
             ({'somefield': 1}, '$..somefield', 42, {'somefield': 42}),
