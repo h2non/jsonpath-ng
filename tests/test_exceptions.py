@@ -10,11 +10,31 @@ def test_rw_exception_class():
         rw_parse('foo.bar.`grandparent`.baz')
 
 
-def test_rw_exception_subclass():
+@pytest.mark.parametrize(
+    "path",
+    (
+        'foo[*.bar.baz',
+        'foo.bar.`grandparent`.baz',
+        # error at the end of string
+        'foo[*',
+        # `len` extension not available in the base parser
+        'foo.bar.`len`',
+    )
+)
+def test_rw_exception_subclass(path):
     with pytest.raises(JsonPathParserError):
-        rw_parse('foo.bar.`grandparent`.baz')
+        rw_parse(path)
 
 
-def test_ext_exception_subclass():
+@pytest.mark.parametrize(
+    "path",
+    (
+        'foo[*.bar.baz',
+        'foo.bar.`grandparent`.baz',
+        # error at the end of string
+        'foo[*',
+    )
+)
+def test_ext_exception_subclass(path):
     with pytest.raises(JsonPathParserError):
-        ext_parse('foo.bar.`grandparent`.baz')
+        ext_parse(path)

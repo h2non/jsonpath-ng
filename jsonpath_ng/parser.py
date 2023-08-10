@@ -80,6 +80,8 @@ class JsonPathParser(object):
     ]
 
     def p_error(self, t):
+        if t is None:
+            raise JsonPathParserError('Parse error near the end of string!')
         raise JsonPathParserError('Parse error at %s:%s near token %s (%s)'
                                   % (t.lineno, t.col, t.value, t.type))
 
