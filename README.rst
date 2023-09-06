@@ -187,30 +187,43 @@ Extras
 Extensions
 ----------
 
-+--------------+----------------------------------------------+
-| name         | Example                                      |
-+==============+==============================================+
-| len          | - $.objects.`len`                            |
-+--------------+----------------------------------------------+
-| sub          | - $.field.`sub(/foo\\\\+(.*)/, \\\\1)`       |
-+--------------+----------------------------------------------+
-| split        | - $.field.`split(+, 2, -1)`                  |
-|              | - $.field.`split(sep, segement, maxsplit)`   |
-+--------------+----------------------------------------------+
-| sorted       | - $.objects.`sorted`                         |
-|              | - $.objects[\\some_field]                    |
-|              | - $.objects[\\some_field,/other_field]       |
-+--------------+----------------------------------------------+
-| filter       | - $.objects[?(@some_field > 5)]              |
-|              | - $.objects[?some_field = "foobar")]         |
-|              | - $.objects[?some_field =~ "foobar")]        |
-|              | - $.objects[?some_field > 5 & other < 2)]    |
-+--------------+----------------------------------------------+
-| arithmetic   | - $.foo + "_" + $.bar                        |
-| (-+*/)       | - $.foo * 12                                 |
-|              | - $.objects[*].cow + $.objects[*].cat        |
-+--------------+----------------------------------------------+
+To use the extensions below you must import from `jsonpath_ng.ext`.
 
++--------------+-----------------------------------------------+
+| name         | Example                                       |
++==============+===============================================+
+| len          | - ``$.objects.`len```                         |
++--------------+-----------------------------------------------+
+| sub          | - ``$.field.`sub(/foo\\\\+(.*)/, \\\\1)```    |
+|              | - ``$.field.`sub(/regex/, replacement)```     |
++--------------+-----------------------------------------------+
+| split        | - ``$.field.`split(+, 2, -1)```               |
+|              | - ``$.field.`split(sep, segement, maxsplit)```|
++--------------+-----------------------------------------------+
+| sorted       | - ``$.objects.`sorted```                      |
+|              | - ``$.objects[\\some_field]``                 |
+|              | - ``$.objects[\\some_field,/other_field]``    |
++--------------+-----------------------------------------------+
+| filter       | - ``$.objects[?(@some_field > 5)]``           |
+|              | - ``$.objects[?some_field = "foobar"]``       |
+|              | - ``$.objects[?some_field =~ "foobar"]``      |
+|              | - ``$.objects[?some_field > 5 & other < 2]``  |
+|              |                                               |
+|              | Supported operators:                          |
+|              | - Equality: ==, =, !=                         |
+|              | - Comparison: >, >=, <, <=                    |
+|              | - Regex match: =~                             |
+|              |                                               |
+|              | Combine multiple criteria with '&'.           |
+|              |                                               |
+|              | Properties can only be compared to static     |
+|              | values.                                       |
++--------------+-----------------------------------------------+
+| arithmetic   | - ``$.foo + "_" + $.bar``                     |
+| (-+*/)       | - ``$.foo * 12``                              |
+|              | - ``$.objects[*].cow + $.objects[*].cat``     |
++--------------+-----------------------------------------------+
+-
 About arithmetic and string
 ---------------------------
 
@@ -228,10 +241,10 @@ Example with data::
         'fish': 'bar'
     }
 
-| **cow + fish** returns **cowfish**
-| **$.cow + $.fish** returns **foobar**
-| **$.cow + "_" + $.fish** returns **foo_bar**
-| **$.cow + "_" + fish** returns **foo_fish**
+| ``cow + fish`` returns ``cowfish``
+| ``$.cow + $.fish`` returns ``foobar``
+| ``$.cow + "_" + $.fish`` returns ``foo_bar``
+| ``$.cow + "_" + fish`` returns ``foo_fish``
 
 About arithmetic and list
 -------------------------
@@ -245,7 +258,7 @@ Example with data::
         {'cow': 4, 'cat': 6}
     ]}
 
-| **$.objects[\*].cow + $.objects[\*].cat** returns **[6, 9]**
+| ``$.objects[\*].cow + $.objects[\*].cat`` returns ``[6, 9]``
 
 More to explore
 ---------------
@@ -322,9 +335,7 @@ limitations under the License.
 
 .. |PyPi downloads| image:: https://pypip.in/d/jsonpath-ng/badge.png
    :target: https://pypi.python.org/pypi/jsonpath-ng
-.. |Build Status| image:: https://travis-ci.org/h2non/jsonpath-ng.svg?branch=master
-   :target: https://travis-ci.org/h2non/jsonpath-ng
+.. |Build Status| image:: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml
 .. |PyPI| image:: https://img.shields.io/pypi/v/jsonpath-ng.svg?maxAge=2592000?style=flat-square
    :target: https://pypi.python.org/pypi/jsonpath-ng
-.. |Documentation Status| image:: https://img.shields.io/badge/docs-latest-green.svg?style=flat
-   :target: http://jsonpath-ng.readthedocs.io/en/latest/?badge=latest

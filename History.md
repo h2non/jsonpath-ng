@@ -1,4 +1,19 @@
 
+1.5.3 / 2021-07-05
+==================
+
+  * Update __init__.py
+  * Update setup.py
+  * Merge pull request #72 from kaapstorm/find_or_create
+  * Tests
+  * Add `update_or_create()` method
+  * Merge pull request #68 from kaapstorm/example_tests
+  * Merge pull request #70 from kaapstorm/exceptions
+  * Add/fix `__eq__()`
+  * Add tests based on Stefan Goessner's examples
+  * Tests
+  * Allow callers to catch JSONPathErrors
+
 v1.5.2 / 2020-09-07
 ===================
 

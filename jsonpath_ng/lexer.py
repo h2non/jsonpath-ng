@@ -4,11 +4,9 @@ import logging
 
 import ply.lex
 
+from jsonpath_ng.exceptions import JsonPathLexerError
+
 logger = logging.getLogger(__name__)
-
-
-class JsonPathLexerError(Exception):
-    pass
 
 
 class JsonPathLexer(object):
@@ -18,7 +16,7 @@ class JsonPathLexer(object):
 
     def __init__(self, debug=False):
         self.debug = debug
-        if self.__doc__ == None:
+        if self.__doc__ is None:
             raise JsonPathLexerError('Docstrings have been removed! By design of PLY, jsonpath-rw requires docstrings. You must not use PYTHONOPTIMIZE=2 or python -OO.')
 
     def tokenize(self, string):
@@ -33,7 +31,8 @@ class JsonPathLexer(object):
 
         while True:
             t = new_lexer.token()
-            if t is None: break
+            if t is None:
+                break
             t.col = t.lexpos - new_lexer.latest_newline
             yield t
 
