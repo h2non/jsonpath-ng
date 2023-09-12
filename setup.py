@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name='jsonpath-ng',
-    version='1.5.3.1',
+    version='1.5.3',
     description=(
         'A final implementation of JSONPath for Python that aims to be '
         'standard compliant, including arithmetic and binary comparison '

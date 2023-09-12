@@ -620,10 +620,10 @@ class Fields(JSONPath):
     def __str__(self):
         # If any JsonPathLexer.literals are included in field name need quotes
         # This avoids unnecessary quotes to keep strings short.
-        literals = JsonPathLexer.literals
         # Test each field whether it contains a literal and only then add quotes
         # The test loops over all literals, could possibly optimize to short circuit if one found
-        fields_as_str = ("'" + str(f) + "'" if any([l in f for l in literals]) else str(f) for f in self.fields)
+        fields_as_str = ("'" + str(f) + "'" if any([l in f for l in JsonPathLexer.literals]) else
+                         str(f) for f in self.fields)
         return ','.join(fields_as_str)
 
 
