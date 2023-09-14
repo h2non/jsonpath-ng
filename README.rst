@@ -11,7 +11,7 @@ About
 -----
 
 This library provides a robust and significantly extended implementation
-of JSONPath for Python. It is tested with CPython 2.6, 2.7 & 3.x.
+of JSONPath for Python. It is tested with CPython 3.7 and higher.
 
 This library differs from other JSONPath implementations in that it is a
 full *language* implementation, meaning the JSONPath expressions are
