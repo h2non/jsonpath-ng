@@ -1,3 +1,29 @@
+1.6.0 / 2023-09-13
+===================
+  *  Enclose field names containing literals in quotes
+  *  Add note about extensions
+  *  Remove documentation status link
+  *  Update supported versions in setup.py
+  *  Add LICENSE file
+  *  Code cleanup
+  *  Remove dependency on six
+  *  Update build status badge
+  *  (origin/github-actions, github-actions) Remove testscenarios dependency
+  *  Remove pytest version constraints
+  *  Add testing with GitHub actions
+  *  Escape back slashes in tests to avoid DeprecationWarning.
+  *  Use raw strings for regular expressions to avoid DeprecationWarning.
+  *  refactor(package): remove dependency for decorator
+  *  Merge pull request #128 from michaelmior/hashable
+  *  (origin/hashable, hashable) Make path instances hashable
+  *  Merge pull request #122 from snopoke/snopoke-patch-1
+  *  Add more detail to filter docs.
+  *  remove incorrect parenthesis in filter examples
+  *  Merge pull request #119 from snopoke/patch-1
+  *  add 'sub' line with function param names
+  *  readme formatting fixes
+  *  chore(history): update
+  *  Update __init__.py
 
 1.5.3 / 2021-07-05
 ==================

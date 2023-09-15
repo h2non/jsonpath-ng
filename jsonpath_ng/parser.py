@@ -80,6 +80,8 @@ class JsonPathParser(object):
     ]
 
     def p_error(self, t):
+        if t is None:
+            raise JsonPathParserError('Parse error near the end of string!')
         raise JsonPathParserError('Parse error at %s:%s near token %s (%s)'
                                   % (t.lineno, t.col, t.value, t.type))
 
@@ -174,8 +176,9 @@ class JsonPathParser(object):
         p[0] = Slice()
 
     def p_slice(self, p): # Currently does not support `step`
-        "slice : maybe_int ':' maybe_int"
-        p[0] = Slice(start=p[1], end=p[3])
+        """slice : maybe_int ':' maybe_int
+                 | maybe_int ':' maybe_int ':' maybe_int """
+        p[0] = Slice(*p[1::2])
 
     def p_maybe_int(self, p):
         """maybe_int : NUMBER

@@ -90,3 +90,29 @@ class Len(JSONPath):
 
     def __repr__(self):
         return 'Len()'
+
+
+class Keys(JSONPath):
+    """The JSONPath referring to the keys of the current object.
+    Concrete syntax is '`keys`'.
+    """
+
+    def find(self, datum):
+        datum = DatumInContext.wrap(datum)
+        try:
+            value = list(datum.value.keys())
+        except Exception as e:
+            return []
+        else:
+            return [DatumInContext(value[i],
+                                               context=None,
+                                               path=Keys()) for i in range (0, len(datum.value))]
+
+    def __eq__(self, other):
+        return isinstance(other, Keys)
+
+    def __str__(self):
+        return '`keys`'
+
+    def __repr__(self):
+        return 'Keys()'
