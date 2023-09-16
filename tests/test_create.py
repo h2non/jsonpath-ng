@@ -98,6 +98,13 @@ Params = namedtuple('Params', 'string initial_data insert_val target')
                {'bar': 'baz', 'qux': 42},
                {'bar': 'bizzle'}
            ]}),
+    Params(string='[1].foo',
+           initial_data=[{'foo': 1},
+                         {'bar': 2}],
+           insert_val=42,
+           target=[{'foo': 1},
+                   {'foo': 42,
+                    'bar': 2}],)
 ])
 def test_update_or_create(string, initial_data, insert_val, target):
     jsonpath = parse(string)
