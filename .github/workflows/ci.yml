@@ -7,7 +7,7 @@ on:
       - 'v*'
   pull_request:
     branches:
-      - main
+      - master
 jobs:
   test:
     runs-on: ubuntu-latest
