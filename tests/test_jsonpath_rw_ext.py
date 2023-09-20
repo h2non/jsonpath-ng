@@ -19,8 +19,9 @@ test_jsonpath_ng_ext
 Tests for `jsonpath_ng_ext` module.
 """
 
+import unittest
+
 from jsonpath_ng import jsonpath  # For setting the global auto_id_field flag
-from oslotest import base
 
 from jsonpath_ng.ext import parser
 
@@ -376,7 +377,7 @@ class Testjsonpath_ng_ext:
 # to ensure we didn't break jsonpath_ng
 
 
-class TestJsonPath(base.BaseTestCase):
+class TestJsonPath(unittest.TestCase):
     """Tests of the actual jsonpath functionality """
 
     #

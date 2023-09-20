@@ -1,4 +1,3 @@
-oslotest
 pytest
 flake8
 coverage
