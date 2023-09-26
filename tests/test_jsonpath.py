@@ -1,4 +1,3 @@
-from __future__ import unicode_literals, print_function, absolute_import, division, generators, nested_scopes
 import unittest
 
 from jsonpath_ng import jsonpath # For setting the global auto_id_field flag

@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, generators, nested_scopes,
-                        print_function, unicode_literals)
-
 import logging
 from itertools import *  # noqa
 from jsonpath_ng.lexer import JsonPathLexer
@@ -16,7 +13,7 @@ NOT_SET = object()
 LIST_KEY = object()
 
 
-class JSONPath(object):
+class JSONPath:
     """
     The base class for JSONPath abstract syntax; those
     methods stubbed here are the interface to supported
@@ -78,7 +75,7 @@ class JSONPath(object):
             return DatumInContext(value, path=Root(), context=None)
 
 
-class DatumInContext(object):
+class DatumInContext:
     """
     Represents a datum along a path from a context.
 

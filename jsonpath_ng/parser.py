@@ -1,10 +1,3 @@
-from __future__ import (
-    print_function,
-    absolute_import,
-    division,
-    generators,
-    nested_scopes,
-)
 import logging
 import sys
 import os.path
@@ -22,7 +15,7 @@ def parse(string):
     return JsonPathParser().parse(string)
 
 
-class JsonPathParser(object):
+class JsonPathParser:
     '''
     An LALR-parser for JsonPath
     '''
@@ -189,7 +182,7 @@ class JsonPathParser(object):
         'empty :'
         p[0] = None
 
-class IteratorToTokenStream(object):
+class IteratorToTokenStream:
     def __init__(self, iterator):
         self.iterator = iterator
 

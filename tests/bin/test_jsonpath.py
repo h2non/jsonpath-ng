@@ -1,6 +1,3 @@
-# Use modern Python
-from __future__ import unicode_literals, print_function, absolute_import, division, generators, nested_scopes
-
 # Standard library imports
 import unittest
 import logging
@@ -15,7 +12,7 @@ class TestJsonPathScript(unittest.TestCase):
     """
     Tests for the jsonpath.py command line interface.
     """
-    
+
     @classmethod
     def setup_class(cls):
         logging.basicConfig()

@@ -1,4 +1,3 @@
-from __future__ import unicode_literals, print_function, absolute_import, division, generators, nested_scopes
 import sys
 import logging
 
@@ -9,7 +8,7 @@ from jsonpath_ng.exceptions import JsonPathLexerError
 logger = logging.getLogger(__name__)
 
 
-class JsonPathLexer(object):
+class JsonPathLexer:
     '''
     A Lexical analyzer for JsonPath.
     '''
