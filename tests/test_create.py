@@ -1,4 +1,6 @@
+import copy
 from collections import namedtuple
+from contextlib import nullcontext as does_not_raise
 
 import pytest
 
@@ -7,137 +9,67 @@ from jsonpath_ng.ext import parse
 Params = namedtuple('Params', 'string initial_data insert_val target')
 
 
-@pytest.mark.parametrize('string, initial_data, insert_val, target', [
-
-    Params(string='$.foo',
-           initial_data={},
-           insert_val=42,
-           target={'foo': 42}),
-
-    Params(string='$.foo.bar',
-           initial_data={},
-           insert_val=42,
-           target={'foo': {'bar': 42}}),
-
-    Params(string='$.foo[0]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [42]}),
-
-    Params(string='$.foo[1]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{}, 42]}),
-
-    Params(string='$.foo[0].bar',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{'bar': 42}]}),
-
-    Params(string='$.foo[1].bar',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{}, {'bar': 42}]}),
-
-    Params(string='$.foo[0][0]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [[42]]}),
-
-    Params(string='$.foo[1][1]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{}, [{}, 42]]}),
-
-    Params(string='foo[0]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [42]}),
-
-    Params(string='foo[1]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{}, 42]}),
-
-    Params(string='foo',
-           initial_data={},
-           insert_val=42,
-           target={'foo': 42}),
-
-    # Initial data can be a list if we expect a list back
-    Params(string='[0]',
-           initial_data=[],
-           insert_val=42,
-           target=[42]),
-
-    Params(string='[1]',
-           initial_data=[],
-           insert_val=42,
-           target=[{}, 42]),
-
-    # Converts initial data to a list if necessary
-    Params(string='[0]',
-           initial_data={},
-           insert_val=42,
-           target=[42]),
-
-    Params(string='[1]',
-           initial_data={},
-           insert_val=42,
-           target=[{}, 42]),
-
-    Params(string='foo[?bar="baz"].qux',
-           initial_data={'foo': [
-               {'bar': 'baz'},
-               {'bar': 'bizzle'},
-           ]},
-           insert_val=42,
-           target={'foo': [
-               {'bar': 'baz', 'qux': 42},
-               {'bar': 'bizzle'}
-           ]}),
-    Params(string='[1].foo',
-           initial_data=[{'foo': 1},
-                         {'bar': 2}],
-           insert_val=42,
-           target=[{'foo': 1},
-                   {'foo': 42,
-                    'bar': 2}],)
-])
-def test_update_or_create(string, initial_data, insert_val, target):
+@pytest.mark.parametrize(
+    "string, initial_data, expected_result",
+    (
+        ("$.foo", {}, {"foo": 42}),
+        ("$.foo.bar", {}, {"foo": {"bar": 42}}),
+        ("$.foo[0]", {}, {"foo": [42]}),
+        ("$.foo[1]", {}, {"foo": [{}, 42]}),
+        ("$.foo[0].bar", {}, {"foo": [{"bar": 42}]}),
+        ("$.foo[1].bar", {}, {"foo": [{}, {"bar": 42}]}),
+        ("$.foo[0][0]", {}, {"foo": [[42]]}),
+        ("$.foo[1][1]", {}, {"foo": [{}, [{}, 42]]}),
+        ("foo[0]", {}, {"foo": [42]}),
+        ("foo[1]", {}, {"foo": [{}, 42]}),
+        ("foo", {}, {"foo": 42}),
+        #
+        # Initial data can be a list if we expect a list back.
+        ("[0]", [], [42]),
+        ("[1]", [], [{}, 42]),
+        #
+        # Convert initial data to a list, if necessary.
+        ("[0]", {}, [42]),
+        ("[1]", {}, [{}, 42]),
+        #
+        (
+            'foo[?bar="baz"].qux',
+            {
+                "foo": [
+                    {"bar": "baz"},
+                    {"bar": "bizzle"},
+                ]
+            },
+            {"foo": [{"bar": "baz", "qux": 42}, {"bar": "bizzle"}]},
+        ),
+        ("[1].foo", [{"foo": 1}, {"bar": 2}], [{"foo": 1}, {"foo": 42, "bar": 2}]),
+    ),
+)
+def test_update_or_create(string, initial_data, expected_result):
     jsonpath = parse(string)
-    result = jsonpath.update_or_create(initial_data, insert_val)
-    assert result == target
+    result = jsonpath.update_or_create(initial_data, 42)
+    assert result == expected_result
 
 
-@pytest.mark.parametrize('string, initial_data, insert_val, target', [
-    # Slice not supported
-    Params(string='foo[0:1]',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [42, 42]}),
-    # result is {'foo': {}}
-
-    # Filter does not create items to meet criteria
-    Params(string='foo[?bar="baz"].qux',
-           initial_data={},
-           insert_val=42,
-           target={'foo': [{'bar': 'baz', 'qux': 42}]}),
-    # result is {'foo': {}}
-
-    # Does not convert initial data to a dictionary
-    Params(string='foo',
-           initial_data=[],
-           insert_val=42,
-           target={'foo': 42}),
-    # raises TypeError
-
-])
-@pytest.mark.xfail
-def test_unsupported_classes(string, initial_data, insert_val, target):
+@pytest.mark.parametrize(
+    "string, initial_data, expectation",
+    (
+        # Slice not supported
+        ("foo[0:1]", {}, does_not_raise()),
+        #
+        # Filter does not create items to meet criteria
+        ('foo[?bar="baz"].qux', {}, does_not_raise()),
+        #
+        # Does not convert initial data to a dictionary
+        ("foo", [], pytest.raises(TypeError)),
+    ),
+)
+def test_unsupported_classes(string, initial_data, expectation):
+    copied_initial_data = copy.copy(initial_data)
     jsonpath = parse(string)
-    result = jsonpath.update_or_create(initial_data, insert_val)
-    assert result == target
+    with expectation:
+        result = jsonpath.update_or_create(initial_data, 42)
+        assert result != copied_initial_data
 
 
 @pytest.mark.parametrize('string, initial_data, insert_val, target', [
