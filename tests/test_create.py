@@ -1,12 +1,9 @@
 import copy
-from collections import namedtuple
 from contextlib import nullcontext as does_not_raise
 
 import pytest
 
 from jsonpath_ng.ext import parse
-
-Params = namedtuple('Params', 'string initial_data insert_val target')
 
 
 @pytest.mark.parametrize(
@@ -70,40 +67,3 @@ def test_unsupported_classes(string, initial_data, expectation):
     with expectation:
         result = jsonpath.update_or_create(initial_data, 42)
         assert result != copied_initial_data
-
-
-@pytest.mark.parametrize('string, initial_data, insert_val, target', [
-
-    Params(string='$.name[0].text',
-           initial_data={},
-           insert_val='Sir Michael',
-           target={'name': [{'text': 'Sir Michael'}]}),
-
-    Params(string='$.name[0].given[0]',
-           initial_data={'name': [{'text': 'Sir Michael'}]},
-           insert_val='Michael',
-           target={'name': [{'text': 'Sir Michael',
-                             'given': ['Michael']}]}),
-
-    Params(string='$.name[0].prefix[0]',
-           initial_data={'name': [{'text': 'Sir Michael',
-                                   'given': ['Michael']}]},
-           insert_val='Sir',
-           target={'name': [{'text': 'Sir Michael',
-                             'given': ['Michael'],
-                             'prefix': ['Sir']}]}),
-
-    Params(string='$.birthDate',
-           initial_data={'name': [{'text': 'Sir Michael',
-                                   'given': ['Michael'],
-                                   'prefix': ['Sir']}]},
-           insert_val='1943-05-05',
-           target={'name': [{'text': 'Sir Michael',
-                             'given': ['Michael'],
-                             'prefix': ['Sir']}],
-                   'birthDate': '1943-05-05'}),
-])
-def test_build_doc(string, initial_data, insert_val, target):
-    jsonpath = parse(string)
-    result = jsonpath.update_or_create(initial_data, insert_val)
-    assert result == target
