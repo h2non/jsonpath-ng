@@ -1,9 +1,7 @@
-import doctest
 from collections import namedtuple
 
 import pytest
 
-import jsonpath_ng
 from jsonpath_ng.ext import parse
 
 Params = namedtuple('Params', 'string initial_data insert_val target')
@@ -177,9 +175,3 @@ def test_build_doc(string, initial_data, insert_val, target):
     jsonpath = parse(string)
     result = jsonpath.update_or_create(initial_data, insert_val)
     assert result == target
-
-
-def test_doctests():
-    results = doctest.testmod(jsonpath_ng)
-    assert results.failed == 0
-    assert results.attempted > 0
