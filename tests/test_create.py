@@ -182,3 +182,4 @@ def test_build_doc(string, initial_data, insert_val, target):
 def test_doctests():
     results = doctest.testmod(jsonpath_ng)
     assert results.failed == 0
+    assert results.attempted > 0
