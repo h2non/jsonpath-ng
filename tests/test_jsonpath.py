@@ -1,11 +1,10 @@
-import unittest
-
 import pytest
 
-from jsonpath_ng import jsonpath
-from jsonpath_ng.parser import parse
-from jsonpath_ng.jsonpath import *
+from jsonpath_ng.jsonpath import DatumInContext, Fields, Root, This
 from jsonpath_ng.lexer import JsonPathLexerError
+from jsonpath_ng.parser import parse
+
+from .helpers import assert_full_path_equality, assert_value_equality
 
 
 @pytest.mark.parametrize(
@@ -13,14 +12,14 @@ from jsonpath_ng.lexer import JsonPathLexerError
     (
         (None, None, This(), This()),
         (Root(), None, Root(), Root()),
-        (Fields('foo'), 'unimportant', Fields('foo'), Fields('foo')),
+        (Fields("foo"), "unimportant", Fields("foo"), Fields("foo")),
         (
-            Fields('foo'),
-            DatumInContext('unimportant', path=Fields('baz'), context='unimportant'),
-            Fields('foo'),
-            Fields('baz').child(Fields('foo')),
+            Fields("foo"),
+            DatumInContext("unimportant", path=Fields("baz"), context="unimportant"),
+            Fields("foo"),
+            Fields("baz").child(Fields("foo")),
         ),
-    )
+    ),
 )
 def test_datumincontext_init(path_arg, context_arg, expected_path, expected_full_path):
     datum = DatumInContext(3, path=path_arg, context=context_arg)
@@ -29,323 +28,314 @@ def test_datumincontext_init(path_arg, context_arg, expected_path, expected_full
 
 
 def test_datumincontext_in_context():
-    d1 = DatumInContext(3, path=Fields('foo'), context=DatumInContext('bar'))
-    d2 = DatumInContext(3).in_context(path=Fields('foo'), context=DatumInContext('bar'))
+    d1 = DatumInContext(3, path=Fields("foo"), context=DatumInContext("bar"))
+    d2 = DatumInContext(3).in_context(path=Fields("foo"), context=DatumInContext("bar"))
     assert d1 == d2
 
 
 def test_datumincontext_in_context_nested():
-    sequential_calls = DatumInContext(3).in_context(path=Fields('foo'), context='whatever').in_context(path=Fields('baz'), context='whatever')
+    sequential_calls = (
+        DatumInContext(3)
+        .in_context(path=Fields("foo"), context="whatever")
+        .in_context(path=Fields("baz"), context="whatever")
+    )
     nested_calls = DatumInContext(3).in_context(
-        path=Fields('foo'),
-        context=DatumInContext('whatever').in_context(
-            path=Fields('baz'), context='whatever')
+        path=Fields("foo"),
+        context=DatumInContext("whatever").in_context(
+            path=Fields("baz"), context="whatever"
+        ),
     )
     assert sequential_calls == nested_calls
 
 
-class TestJsonPath(unittest.TestCase):
-    """
-    Tests of the actual jsonpath functionality
-    """
-
-    @classmethod
-    def setup_class(cls):
-        logging.basicConfig()
-
+update_test_cases = (
     #
-    # Check that the data value returned is good
+    # Fields
+    # ------
     #
-    def check_cases(self, test_cases):
-        # Note that just manually building an AST would avoid this dep and isolate the tests, but that would suck a bit
-        # Also, we coerce iterables, etc, into the desired target type
-
-        for string, data, target in test_cases:
-            print('parse("%s").find(%s) =?= %s' % (string, data, target))
-            result = parse(string).find(data)
-            if isinstance(target, list):
-                self.assertEqual([r.value for r in result], target)
-            elif isinstance(target, set):
-                self.assertEqual(set([r.value for r in result]), target)
-            else:
-                self.assertEqual(result.value, target)
-
-    def test_fields_value(self):
-        jsonpath.auto_id_field = None
-        self.check_cases([ ('foo', {'foo': 'baz'}, ['baz']),
-                           ('foo,baz', {'foo': 1, 'baz': 2}, [1, 2]),
-                           ('@foo', {'@foo': 1}, [1]),
-                           ('*', {'foo': 1, 'baz': 2}, set([1, 2])) ])
-
-        jsonpath.auto_id_field = 'id'
-        self.check_cases([ ('*', {'foo': 1, 'baz': 2}, set([1, 2, '`this`'])) ])
-
-    def test_root_value(self):
-        jsonpath.auto_id_field = None
-        self.check_cases([
-            ('$', {'foo': 'baz'}, [{'foo':'baz'}]),
-            ('foo.$', {'foo': 'baz'}, [{'foo':'baz'}]),
-            ('foo.$.foo', {'foo': 'baz'}, ['baz']),
-        ])
-
-    def test_this_value(self):
-        jsonpath.auto_id_field = None
-        self.check_cases([
-            ('`this`', {'foo': 'baz'}, [{'foo':'baz'}]),
-            ('foo.`this`', {'foo': 'baz'}, ['baz']),
-            ('foo.`this`.baz', {'foo': {'baz': 3}}, [3]),
-        ])
-
-    def test_index_value(self):
-        self.check_cases([
-            ('[0]', [42], [42]),
-            ('[5]', [42], []),
-            ('[2]', [34, 65, 29, 59], [29]),
-            ('[0]', None, [])
-        ])
-
-    def test_slice_value(self):
-        self.check_cases([('[*]', [1, 2, 3], [1, 2, 3]),
-                          ('[*]', range(1, 4), [1, 2, 3]),
-                          ('[1:]', [1, 2, 3, 4], [2, 3, 4]),
-                          ('[:2]', [1, 2, 3, 4], [1, 2]),
-                          ('[:3:2]', [1, 2, 3, 4], [1, 3]),
-                          ('[1::2]', [1, 2, 3, 4], [2, 4]),
-                          ('[1:5:3]', [1, 2, 3, 4, 5], [2, 5]),
-                          ('[::-2]', [1, 2, 3, 4, 5], [5, 3, 1]),
-        ])
-
-        # Funky slice hacks
-        self.check_cases([
-            ('[*]', 1, [1]), # This is a funky hack
-            ('[0:]', 1, [1]), # This is a funky hack
-            ('[*]', {'foo':1}, [{'foo': 1}]), # This is a funky hack
-            ('[*].foo', {'foo':1}, [1]), # This is a funky hack
-        ])
-
-    def test_child_value(self):
-        self.check_cases([('foo.baz', {'foo': {'baz': 3}}, [3]),
-                          ('foo.baz', {'foo': {'baz': [3]}}, [[3]]),
-                          ('foo.baz.bizzle', {'foo': {'baz': {'bizzle': 5}}}, [5])])
-
-    def test_descendants_value(self):
-        self.check_cases([
-            ('foo..baz', {'foo': {'baz': 1, 'bing': {'baz': 2}}}, [1, 2] ),
-            ('foo..baz', {'foo': [{'baz': 1}, {'baz': 2}]}, [1, 2] ),
-        ])
-
-    def test_parent_value(self):
-        self.check_cases([('foo.baz.`parent`', {'foo': {'baz': 3}}, [{'baz': 3}]),
-                          ('foo.`parent`.foo.baz.`parent`.baz.bizzle', {'foo': {'baz': {'bizzle': 5}}}, [5])])
-
-    def test_hyphen_key(self):
-        self.check_cases([('foo.bar-baz', {'foo': {'bar-baz': 3}}, [3]),
-            ('foo.[bar-baz,blah-blah]', {'foo': {'bar-baz': 3, 'blah-blah':5}},
-                [3,5])])
-        self.assertRaises(JsonPathLexerError, self.check_cases,
-                [('foo.-baz', {'foo': {'-baz': 8}}, [8])])
-
-
-
-
+    ("foo", {"foo": 1}, 5, {"foo": 5}),
+    ("$.*", {"foo": 1, "bar": 2}, 3, {"foo": 3, "bar": 3}),
     #
-    # Check that the paths for the data are correct.
-    # FIXME: merge these tests with the above, since the inputs are the same anyhow
+    # Indexes
+    # -------
     #
-    def check_paths(self, test_cases):
-        # Note that just manually building an AST would avoid this dep and isolate the tests, but that would suck a bit
-        # Also, we coerce iterables, etc, into the desired target type
-
-        for string, data, target in test_cases:
-            print('parse("%s").find(%s).paths =?= %s' % (string, data, target))
-            self.assertEqual(hash(parse(string)), hash(parse(string)))
-            result = parse(string).find(data)
-            if isinstance(target, list):
-                self.assertEqual([str(r.full_path) for r in result], target)
-            elif isinstance(target, set):
-                self.assertEqual(set([str(r.full_path) for r in result]), target)
-            else:
-                assert self.assertEqual(str(result.path), target)
-
-    def test_fields_paths(self):
-        jsonpath.auto_id_field = None
-        self.check_paths([ ('foo', {'foo': 'baz'}, ['foo']),
-                           ('foo,baz', {'foo': 1, 'baz': 2}, ['foo', 'baz']),
-                           ('*', {'foo': 1, 'baz': 2}, set(['foo', 'baz'])) ])
-
-        jsonpath.auto_id_field = 'id'
-        self.check_paths([ ('*', {'foo': 1, 'baz': 2}, set(['foo', 'baz', 'id'])) ])
-
-    def test_root_paths(self):
-        jsonpath.auto_id_field = None
-        self.check_paths([
-            ('$', {'foo': 'baz'}, ['$']),
-            ('foo.$', {'foo': 'baz'}, ['$']),
-            ('foo.$.foo', {'foo': 'baz'}, ['foo']),
-        ])
-
-    def test_this_paths(self):
-        jsonpath.auto_id_field = None
-        self.check_paths([
-            ('`this`', {'foo': 'baz'}, ['`this`']),
-            ('foo.`this`', {'foo': 'baz'}, ['foo']),
-            ('foo.`this`.baz', {'foo': {'baz': 3}}, ['foo.baz']),
-        ])
-
-    def test_index_paths(self):
-        self.check_paths([('[0]', [42], ['[0]']),
-                          ('[2]', [34, 65, 29, 59], ['[2]'])])
-
-    def test_slice_paths(self):
-        self.check_paths([ ('[*]', [1, 2, 3], ['[0]', '[1]', '[2]']),
-                           ('[1:]', [1, 2, 3, 4], ['[1]', '[2]', '[3]']),
-                           ('[1:3]', [1, 2, 3, 4], ['[1]', '[2]']),
-                           ('[1::2]', [1, 2, 3, 4], ['[1]', '[3]']),
-                           ('[::-1]', [1, 2, 3], ['[2]', '[1]', '[0]']),
-                           ('[1:6:3]', range(10), ['[1]', '[4]']),
-        ])
-
-    def test_child_paths(self):
-        self.check_paths([('foo.baz', {'foo': {'baz': 3}}, ['foo.baz']),
-                          ('foo.baz', {'foo': {'baz': [3]}}, ['foo.baz']),
-                          ('foo.baz.bizzle', {'foo': {'baz': {'bizzle': 5}}}, ['foo.baz.bizzle'])])
-
-    def test_descendants_paths(self):
-        self.check_paths([('foo..baz', {'foo': {'baz': 1, 'bing': {'baz': 2}}}, ['foo.baz', 'foo.bing.baz'] )])
-
-    def test_literals_in_field_names(self):
-        self.check_paths([("A.'a.c'", {'A' : {'a.c': 'd'}}, ["A.'a.c'"])])
-
+    ("[0]", ["foo", "bar", "baz"], "test", ["test", "bar", "baz"]),
     #
-    # Check the "auto_id_field" feature
+    # Slices
+    # ------
     #
-    def test_fields_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        self.check_cases([ ('foo.id', {'foo': 'baz'}, ['foo']),
-                           ('foo.id', {'foo': {'id': 'baz'}}, ['baz']),
-                           ('foo,baz.id', {'foo': 1, 'baz': 2}, ['foo', 'baz']),
-                           ('*.id',
-                            {'foo':{'id': 1},
-                             'baz': 2},
-                             set(['1', 'baz'])) ])
+    ("[0:2]", ["foo", "bar", "baz"], "test", ["test", "test", "baz"]),
+    #
+    # Root
+    # ----
+    #
+    ("$", "foo", "bar", "bar"),
+    #
+    # This
+    # ----
+    #
+    ("`this`", "foo", "bar", "bar"),
+    #
+    # Children
+    # --------
+    #
+    ("$.foo", {"foo": "bar"}, "baz", {"foo": "baz"}),
+    ("foo.bar", {"foo": {"bar": 1}}, "baz", {"foo": {"bar": "baz"}}),
+    #
+    # Descendants
+    # -----------
+    #
+    ("$..somefield", {"somefield": 1}, 42, {"somefield": 42}),
+    (
+        "$..nestedfield",
+        {"outer": {"nestedfield": 1}},
+        42,
+        {"outer": {"nestedfield": 42}},
+    ),
+    (
+        "$..bar",
+        {"outs": {"bar": 1, "ins": {"bar": 9}}, "outs2": {"bar": 2}},
+        42,
+        {"outs": {"bar": 42, "ins": {"bar": 42}}, "outs2": {"bar": 42}},
+    ),
+    #
+    # Where
+    # -----
+    #
+    (
+        "*.bar where baz",
+        {"foo": {"bar": {"baz": 1}}, "bar": {"baz": 2}},
+        5,
+        {"foo": {"bar": 5}, "bar": {"baz": 2}},
+    ),
+    (
+        "(* where flag) .. bar",
+        {"foo": {"bar": 1, "flag": 1}, "baz": {"bar": 2}},
+        3,
+        {"foo": {"bar": 3, "flag": 1}, "baz": {"bar": 2}},
+    ),
+)
 
-    def test_root_auto_id(self):
-        jsonpath.auto_id_field = 'id'
-        self.check_cases([
-            ('$.id', {'foo': 'baz'}, ['$']), # This is a wonky case that is not that interesting
-            ('foo.$.id', {'foo': 'baz', 'id': 'bizzle'}, ['bizzle']),
-            ('foo.$.baz.id', {'foo': 4, 'baz': 3}, ['baz']),
-        ])
 
-    def test_this_auto_id(self):
-        jsonpath.auto_id_field = 'id'
-        self.check_cases([
-            ('id', {'foo': 'baz'}, ['`this`']), # This is, again, a wonky case that is not that interesting
-            ('foo.`this`.id', {'foo': 'baz'}, ['foo']),
-            ('foo.`this`.baz.id', {'foo': {'baz': 3}}, ['foo.baz']),
-        ])
+@pytest.mark.parametrize(
+    "expression, data, update_value, expected_value",
+    update_test_cases,
+)
+def test_update(expression, data, update_value, expected_value):
+    result = parse(expression).update(data, update_value)
+    assert result == expected_value
 
-    def test_index_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        self.check_cases([('[0].id', [42], ['[0]']),
-                          ('[2].id', [34, 65, 29, 59], ['[2]'])])
 
-    def test_nested_index_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        data = {
-            "id": 1,
-            "b": {'id': 'bid', 'name': 'bob'},
-            "m": [
-                {'a': 'a1'}, {'a': 'a2', 'id': 'a2id'}
-            ]
-        }
-        self.check_cases([('m.[1].id', data, ['1.m.a2id']),
-                          ('m.[1].$.b.id', data, ['1.bid']),
-                          ('m.[0].id', data, ['1.m.[0]'])])
+find_test_cases = (
+    #
+    # * (star)
+    # --------
+    #
+    ("*", {"foo": 1, "baz": 2}, {1, 2}, {"foo", "baz"}),
+    #
+    # Fields
+    # ------
+    #
+    ("foo", {"foo": "baz"}, ["baz"], ["foo"]),
+    ("foo,baz", {"foo": 1, "baz": 2}, [1, 2], ["foo", "baz"]),
+    ("@foo", {"@foo": 1}, [1], ["@foo"]),
+    #
+    # Roots
+    # -----
+    #
+    ("$", {"foo": "baz"}, [{"foo": "baz"}], ["$"]),
+    ("foo.$", {"foo": "baz"}, [{"foo": "baz"}], ["$"]),
+    ("foo.$.foo", {"foo": "baz"}, ["baz"], ["foo"]),
+    #
+    # This
+    # ----
+    #
+    ("`this`", {"foo": "baz"}, [{"foo": "baz"}], ["`this`"]),
+    ("foo.`this`", {"foo": "baz"}, ["baz"], ["foo"]),
+    ("foo.`this`.baz", {"foo": {"baz": 3}}, [3], ["foo.baz"]),
+    #
+    # Indexes
+    # -------
+    #
+    ("[0]", [42], [42], ["[0]"]),
+    ("[5]", [42], [], []),
+    ("[2]", [34, 65, 29, 59], [29], ["[2]"]),
+    ("[0]", None, [], []),
+    #
+    # Slices
+    # ------
+    #
+    ("[*]", [1, 2, 3], [1, 2, 3], ["[0]", "[1]", "[2]"]),
+    ("[*]", range(1, 4), [1, 2, 3], ["[0]", "[1]", "[2]"]),
+    ("[1:]", [1, 2, 3, 4], [2, 3, 4], ["[1]", "[2]", "[3]"]),
+    ("[1:3]", [1, 2, 3, 4], [2, 3], ["[1]", "[2]"]),
+    ("[:2]", [1, 2, 3, 4], [1, 2], ["[0]", "[1]"]),
+    ("[:3:2]", [1, 2, 3, 4], [1, 3], ["[0]", "[2]"]),
+    ("[1::2]", [1, 2, 3, 4], [2, 4], ["[1]", "[3]"]),
+    ("[1:6:3]", range(1, 10), [2, 5], ["[1]", "[4]"]),
+    ("[::-2]", [1, 2, 3, 4, 5], [5, 3, 1], ["[4]", "[2]", "[0]"]),
+    #
+    # Slices (funky hacks)
+    # --------------------
+    #
+    ("[*]", 1, [1], ["[0]"]),
+    ("[0:]", 1, [1], ["[0]"]),
+    ("[*]", {"foo": 1}, [{"foo": 1}], ["[0]"]),
+    ("[*].foo", {"foo": 1}, [1], ["[0].foo"]),
+    #
+    # Children
+    # --------
+    #
+    ("foo.baz", {"foo": {"baz": 3}}, [3], ["foo.baz"]),
+    ("foo.baz", {"foo": {"baz": [3]}}, [[3]], ["foo.baz"]),
+    ("foo.baz.qux", {"foo": {"baz": {"qux": 5}}}, [5], ["foo.baz.qux"]),
+    #
+    # Descendants
+    # -----------
+    #
+    (
+        "foo..baz",
+        {"foo": {"baz": 1, "bing": {"baz": 2}}},
+        [1, 2],
+        ["foo.baz", "foo.bing.baz"],
+    ),
+    (
+        "foo..baz",
+        {"foo": [{"baz": 1}, {"baz": 2}]},
+        [1, 2],
+        ["foo.[0].baz", "foo.[1].baz"],
+    ),
+    #
+    # Parents
+    # -------
+    #
+    ("foo.baz.`parent`", {"foo": {"baz": 3}}, [{"baz": 3}], ["foo"]),
+    (
+        "foo.`parent`.foo.baz.`parent`.baz.qux",
+        {"foo": {"baz": {"qux": 5}}},
+        [5],
+        ["foo.baz.qux"],
+    ),
+    #
+    # Hyphens
+    # -------
+    #
+    ("foo.bar-baz", {"foo": {"bar-baz": 3}}, [3], ["foo.bar-baz"]),
+    (
+        "foo.[bar-baz,blah-blah]",
+        {"foo": {"bar-baz": 3, "blah-blah": 5}},
+        [3, 5],
+        ["foo.bar-baz", "foo.blah-blah"],
+    ),
+    #
+    # Literals
+    # --------
+    #
+    ("A.'a.c'", {"A": {"a.c": "d"}}, ["d"], ["A.'a.c'"]),
+)
 
-    def test_slice_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        self.check_cases([ ('[*].id', [1, 2, 3], ['[0]', '[1]', '[2]']),
-                           ('[1:].id', [1, 2, 3, 4], ['[1]', '[2]', '[3]']) ])
 
-    def test_child_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        self.check_cases([('foo.baz.id', {'foo': {'baz': 3}}, ['foo.baz']),
-                          ('foo.baz.id', {'foo': {'baz': [3]}}, ['foo.baz']),
-                          ('foo.baz.id', {'foo': {'id': 'bizzle', 'baz': 3}}, ['bizzle.baz']),
-                          ('foo.baz.id', {'foo': {'baz': {'id': 'hi'}}}, ['foo.hi']),
-                          ('foo.baz.bizzle.id', {'foo': {'baz': {'bizzle': 5}}}, ['foo.baz.bizzle'])])
+@pytest.mark.parametrize(
+    "path, data, expected_values, expected_full_paths", find_test_cases
+)
+def test_find(path, data, expected_values, expected_full_paths):
+    results = parse(path).find(data)
 
-    def test_descendants_auto_id(self):
-        jsonpath.auto_id_field = "id"
-        self.check_cases([('foo..baz.id',
-                           {'foo': {
-                               'baz': 1,
-                               'bing': {
-                                   'baz': 2
-                                }
-                             } },
-                             ['foo.baz',
-                              'foo.bing.baz'] )])
+    # Verify result values and full paths match expectations.
+    assert_value_equality(results, expected_values)
+    assert_full_path_equality(results, expected_full_paths)
 
-    def check_update_cases(self, test_cases):
-        for original, expr_str, value, expected in test_cases:
-            print('parse(%r).update(%r, %r) =?= %r'
-                  % (expr_str, original, value, expected))
-            expr = parse(expr_str)
-            actual = expr.update(original, value)
-            self.assertEqual(actual, expected)
 
-    def test_update_root(self):
-        self.check_update_cases([
-            ('foo', '$', 'bar', 'bar')
-        ])
+find_test_cases_with_auto_id = (
+    #
+    # * (star)
+    # --------
+    #
+    ("*", {"foo": 1, "baz": 2}, {1, 2, "`this`"}),
+    #
+    # Fields
+    # ------
+    #
+    ("foo.id", {"foo": "baz"}, ["foo"]),
+    ("foo.id", {"foo": {"id": "baz"}}, ["baz"]),
+    ("foo,baz.id", {"foo": 1, "baz": 2}, ["foo", "baz"]),
+    ("*.id", {"foo": {"id": 1}, "baz": 2}, {"1", "baz"}),
+    #
+    # Roots
+    # -----
+    #
+    ("$.id", {"foo": "baz"}, ["$"]),
+    ("foo.$.id", {"foo": "baz", "id": "bizzle"}, ["bizzle"]),
+    ("foo.$.baz.id", {"foo": 4, "baz": 3}, ["baz"]),
+    #
+    # This
+    # ----
+    #
+    ("id", {"foo": "baz"}, ["`this`"]),
+    ("foo.`this`.id", {"foo": "baz"}, ["foo"]),
+    ("foo.`this`.baz.id", {"foo": {"baz": 3}}, ["foo.baz"]),
+    #
+    # Indexes
+    # -------
+    #
+    ("[0].id", [42], ["[0]"]),
+    ("[2].id", [34, 65, 29, 59], ["[2]"]),
+    #
+    # Slices
+    # ------
+    #
+    ("[*].id", [1, 2, 3], ["[0]", "[1]", "[2]"]),
+    ("[1:].id", [1, 2, 3, 4], ["[1]", "[2]", "[3]"]),
+    #
+    # Children
+    # --------
+    #
+    ("foo.baz.id", {"foo": {"baz": 3}}, ["foo.baz"]),
+    ("foo.baz.id", {"foo": {"baz": [3]}}, ["foo.baz"]),
+    ("foo.baz.id", {"foo": {"id": "bizzle", "baz": 3}}, ["bizzle.baz"]),
+    ("foo.baz.id", {"foo": {"baz": {"id": "hi"}}}, ["foo.hi"]),
+    ("foo.baz.bizzle.id", {"foo": {"baz": {"bizzle": 5}}}, ["foo.baz.bizzle"]),
+    #
+    # Descendants
+    # -----------
+    #
+    (
+        "foo..baz.id",
+        {"foo": {"baz": 1, "bing": {"baz": 2}}},
+        ["foo.baz", "foo.bing.baz"],
+    ),
+)
 
-    def test_update_this(self):
-        self.check_update_cases([
-            ('foo', '`this`', 'bar', 'bar')
-        ])
 
-    def test_update_fields(self):
-        self.check_update_cases([
-            ({'foo': 1}, 'foo', 5, {'foo': 5}),
-            ({'foo': 1, 'bar': 2}, '$.*', 3, {'foo': 3, 'bar': 3})
-        ])
+@pytest.mark.parametrize("path, data, expected_values", find_test_cases_with_auto_id)
+def test_find_values_auto_id(auto_id_field, path, data, expected_values):
+    result = parse(path).find(data)
+    assert_value_equality(result, expected_values)
 
-    def test_update_child(self):
-        self.check_update_cases([
-            ({'foo': 'bar'}, '$.foo', 'baz', {'foo': 'baz'}),
-            ({'foo': {'bar': 1}}, 'foo.bar', 'baz', {'foo': {'bar': 'baz'}})
-        ])
 
-    def test_update_where(self):
-        self.check_update_cases([
-            ({'foo': {'bar': {'baz': 1}}, 'bar': {'baz': 2}},
-             '*.bar where baz', 5, {'foo': {'bar': 5}, 'bar': {'baz': 2}})
-        ])
+def test_find_full_paths_auto_id(auto_id_field):
+    results = parse("*").find({"foo": 1, "baz": 2})
+    assert_full_path_equality(results, {"foo", "baz", "id"})
 
-    def test_update_descendants_where(self):
-        self.check_update_cases([
-            ({'foo': {'bar': 1, 'flag': 1}, 'baz': {'bar': 2}},
-             '(* where flag) .. bar', 3,
-             {'foo': {'bar': 3, 'flag': 1}, 'baz': {'bar': 2}})
-        ])
 
-    def test_update_descendants(self):
-        self.check_update_cases([
-            ({'somefield': 1}, '$..somefield', 42, {'somefield': 42}),
-            ({'outer': {'nestedfield': 1}}, '$..nestedfield', 42, {'outer': {'nestedfield': 42}}),
-            ({'outs': {'bar': 1, 'ins': {'bar': 9}}, 'outs2': {'bar': 2}},
-             '$..bar', 42,
-             {'outs': {'bar': 42, 'ins': {'bar': 42}}, 'outs2': {'bar': 42}})
-        ])
+@pytest.mark.parametrize(
+    "string, target",
+    (
+        ("m.[1].id", ["1.m.a2id"]),
+        ("m.[1].$.b.id", ["1.bid"]),
+        ("m.[0].id", ["1.m.[0]"]),
+    ),
+)
+def test_nested_index_auto_id(auto_id_field, string, target):
+    data = {
+        "id": 1,
+        "b": {"id": "bid", "name": "bob"},
+        "m": [{"a": "a1"}, {"a": "a2", "id": "a2id"}],
+    }
+    result = parse(string).find(data)
+    assert_value_equality(result, target)
 
-    def test_update_index(self):
-        self.check_update_cases([
-            (['foo', 'bar', 'baz'], '[0]', 'test', ['test', 'bar', 'baz'])
-        ])
 
-    def test_update_slice(self):
-        self.check_update_cases([
-            (['foo', 'bar', 'baz'], '[0:2]', 'test', ['test', 'test', 'baz'])
-        ])
+def test_invalid_hyphenation_in_key():
+    with pytest.raises(JsonPathLexerError):
+        parse("foo.-baz").find({"foo": {"-baz": 8}})
