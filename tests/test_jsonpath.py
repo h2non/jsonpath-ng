@@ -1,73 +1,47 @@
 import unittest
 
-from jsonpath_ng import jsonpath # For setting the global auto_id_field flag
+import pytest
 
+from jsonpath_ng import jsonpath
 from jsonpath_ng.parser import parse
 from jsonpath_ng.jsonpath import *
 from jsonpath_ng.lexer import JsonPathLexerError
 
-class TestDatumInContext(unittest.TestCase):
-    """
-    Tests of properties of the DatumInContext and AutoIdForDatum objects
-    """
 
-    @classmethod
-    def setup_class(cls):
-        logging.basicConfig()
+@pytest.mark.parametrize(
+    "path_arg, context_arg, expected_path, expected_full_path",
+    (
+        (None, None, This(), This()),
+        (Root(), None, Root(), Root()),
+        (Fields('foo'), 'unimportant', Fields('foo'), Fields('foo')),
+        (
+            Fields('foo'),
+            DatumInContext('unimportant', path=Fields('baz'), context='unimportant'),
+            Fields('foo'),
+            Fields('baz').child(Fields('foo')),
+        ),
+    )
+)
+def test_datumincontext_init(path_arg, context_arg, expected_path, expected_full_path):
+    datum = DatumInContext(3, path=path_arg, context=context_arg)
+    assert datum.path == expected_path
+    assert datum.full_path == expected_full_path
 
-    def test_DatumInContext_init(self):
 
-        test_datum1 = DatumInContext(3)
-        self.assertEqual(test_datum1.path, This())
-        self.assertEqual(test_datum1.full_path, This())
+def test_datumincontext_in_context():
+    d1 = DatumInContext(3, path=Fields('foo'), context=DatumInContext('bar'))
+    d2 = DatumInContext(3).in_context(path=Fields('foo'), context=DatumInContext('bar'))
+    assert d1 == d2
 
-        test_datum2 = DatumInContext(3, path=Root())
-        self.assertEqual(test_datum2.path, Root())
-        self.assertEqual(test_datum2.full_path, Root())
 
-        test_datum3 = DatumInContext(3, path=Fields('foo'), context='does not matter')
-        self.assertEqual(test_datum3.path, Fields('foo'))
-        self.assertEqual(test_datum3.full_path, Fields('foo'))
-
-        test_datum3 = DatumInContext(3, path=Fields('foo'), context=DatumInContext('does not matter', path=Fields('baz'), context='does not matter'))
-        self.assertEqual(test_datum3.path, Fields('foo'))
-        self.assertEqual(test_datum3.full_path, Fields('baz').child(Fields('foo')))
-
-    def test_DatumInContext_in_context(self):
-
-        self.assertEqual(DatumInContext(3).in_context(path=Fields('foo'), context=DatumInContext('whatever')),
-                DatumInContext(3, path=Fields('foo'), context=DatumInContext('whatever')))
-
-        self.assertEqual(DatumInContext(3).in_context(path=Fields('foo'), context='whatever').in_context(path=Fields('baz'), context='whatever'),
-                DatumInContext(3).in_context(path=Fields('foo'), context=DatumInContext('whatever').in_context(path=Fields('baz'), context='whatever')))
-
-    # def test_AutoIdForDatum_pseudopath(self):
-    #     assert AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')), id_field='id').pseudopath == Fields('foo')
-    #     assert AutoIdForDatum(DatumInContext(value={'id': 'bizzle'}, path=Fields('foo')), id_field='id').pseudopath == Fields('bizzle')
-
-    #     assert AutoIdForDatum(DatumInContext(value={'id': 'bizzle'}, path=Fields('foo')),
-    #                           id_field='id',
-    #                           context=DatumInContext(value=3, path=This())).pseudopath == Fields('bizzle')
-
-    #     assert (AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')),
-    #                            id_field='id').in_context(DatumInContext(value={'id': 'bizzle'}, path=This()))
-    #             ==
-    #             AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')),
-    #                            id_field='id',
-    #                            context=DatumInContext(value={'id': 'bizzle'}, path=This())))
-
-    #     assert (AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')),
-    #                            id_field='id',
-    #                            context=DatumInContext(value={"id": 'bizzle'},
-    #                                                path=Fields('maggle'))).in_context(DatumInContext(value='whatever', path=Fields('miggle')))
-    #             ==
-    #             AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')),
-    #                            id_field='id',
-    #                            context=DatumInContext(value={'id': 'bizzle'}, path=Fields('miggle').child(Fields('maggle')))))
-
-    #     assert AutoIdForDatum(DatumInContext(value=3, path=Fields('foo')),
-    #                           id_field='id',
-    #                           context=DatumInContext(value={'id': 'bizzle'}, path=This())).pseudopath == Fields('bizzle').child(Fields('foo'))
+def test_datumincontext_in_context_nested():
+    sequential_calls = DatumInContext(3).in_context(path=Fields('foo'), context='whatever').in_context(path=Fields('baz'), context='whatever')
+    nested_calls = DatumInContext(3).in_context(
+        path=Fields('foo'),
+        context=DatumInContext('whatever').in_context(
+            path=Fields('baz'), context='whatever')
+    )
+    assert sequential_calls == nested_calls
 
 
 class TestJsonPath(unittest.TestCase):
