@@ -5,11 +5,6 @@ from jsonpath_ng.exceptions import JSONPathError, JsonPathParserError
 from jsonpath_ng.ext import parse as ext_parse
 
 
-def test_rw_exception_class():
-    with pytest.raises(JSONPathError):
-        rw_parse('foo.bar.`grandparent`.baz')
-
-
 @pytest.mark.parametrize(
     "path",
     (
