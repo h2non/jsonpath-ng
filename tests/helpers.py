@@ -15,7 +15,7 @@ def assert_value_equality(results, expected_values):
         assert len(left_values) == len(expected_values)
         assert set(left_values) == expected_values
     else:
-        assert results.value == expected_values
+        assert results[0].value == expected_values
 
 
 def assert_full_path_equality(results, expected_full_paths):
