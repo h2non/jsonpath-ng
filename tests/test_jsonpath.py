@@ -1,8 +1,9 @@
 import pytest
 
+from jsonpath_ng.ext.parser import parse as ext_parse
 from jsonpath_ng.jsonpath import DatumInContext, Fields, Root, This
 from jsonpath_ng.lexer import JsonPathLexerError
-from jsonpath_ng.parser import parse
+from jsonpath_ng.parser import parse as base_parse
 
 from .helpers import assert_full_path_equality, assert_value_equality
 
@@ -46,6 +47,15 @@ def test_datumincontext_in_context_nested():
         ),
     )
     assert sequential_calls == nested_calls
+
+
+parsers = pytest.mark.parametrize(
+    "parse",
+    (
+        pytest.param(base_parse, id="parse=jsonpath_ng.parser.parse"),
+        pytest.param(ext_parse, id="parse=jsonpath_ng.ext.parser.parse"),
+    ),
+)
 
 
 update_test_cases = (
@@ -121,7 +131,8 @@ update_test_cases = (
     "expression, data, update_value, expected_value",
     update_test_cases,
 )
-def test_update(expression, data, update_value, expected_value):
+@parsers
+def test_update(parse, expression, data, update_value, expected_value):
     result = parse(expression).update(data, update_value)
     assert result == expected_value
 
@@ -238,7 +249,8 @@ find_test_cases = (
 @pytest.mark.parametrize(
     "path, data, expected_values, expected_full_paths", find_test_cases
 )
-def test_find(path, data, expected_values, expected_full_paths):
+@parsers
+def test_find(parse, path, data, expected_values, expected_full_paths):
     results = parse(path).find(data)
 
     # Verify result values and full paths match expectations.
@@ -308,12 +320,14 @@ find_test_cases_with_auto_id = (
 
 
 @pytest.mark.parametrize("path, data, expected_values", find_test_cases_with_auto_id)
-def test_find_values_auto_id(auto_id_field, path, data, expected_values):
+@parsers
+def test_find_values_auto_id(auto_id_field, parse, path, data, expected_values):
     result = parse(path).find(data)
     assert_value_equality(result, expected_values)
 
 
-def test_find_full_paths_auto_id(auto_id_field):
+@parsers
+def test_find_full_paths_auto_id(auto_id_field, parse):
     results = parse("*").find({"foo": 1, "baz": 2})
     assert_full_path_equality(results, {"foo", "baz", "id"})
 
@@ -326,7 +340,8 @@ def test_find_full_paths_auto_id(auto_id_field):
         ("m.[0].id", ["1.m.[0]"]),
     ),
 )
-def test_nested_index_auto_id(auto_id_field, string, target):
+@parsers
+def test_nested_index_auto_id(auto_id_field, parse, string, target):
     data = {
         "id": 1,
         "b": {"id": "bid", "name": "bob"},
@@ -338,4 +353,4 @@ def test_nested_index_auto_id(auto_id_field, string, target):
 
 def test_invalid_hyphenation_in_key():
     with pytest.raises(JsonPathLexerError):
-        parse("foo.-baz").find({"foo": {"-baz": 8}})
+        base_parse("foo.-baz")
