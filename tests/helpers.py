@@ -21,18 +21,15 @@ def assert_value_equality(results, expected_values):
 def assert_full_path_equality(results, expected_full_paths):
     """Assert equality between two objects.
 
-    *results* must be a list of results as returned by `.find()` methods.
+    *results* must be a list or set of results as returned by `.find()` methods.
 
     If *expected_full_paths* is a list, then path equality and ordering will be checked.
     If *expected_full_paths* is a set, then path equality and length will be checked.
-    Otherwise, the full path of the result will be compared to the expected full path.
     """
 
     full_paths = [str(result.full_path) for result in results]
     if isinstance(expected_full_paths, list):
         assert full_paths == expected_full_paths, full_paths
-    elif isinstance(expected_full_paths, set):
+    else:  # isinstance(expected_full_paths, set):
         assert len(full_paths) == len(expected_full_paths)
         assert set(full_paths) == expected_full_paths
-    else:
-        assert str(results.full_path) == expected_full_paths
