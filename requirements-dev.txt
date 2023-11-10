@@ -1,5 +1,2 @@
-pytest
+tox
 flake8
-coverage
-pytest-cov
-pytest-randomly

@@ -23,12 +23,8 @@ lint:
 	@flake8 --exclude=tests .
 
 test: clean
-	@echo "$(OK_COLOR)==> Runnings tests ...$(NO_COLOR)"
-	@pytest -s -v --capture sys --cov jsonpath_ng --cov-report term-missing
-
-coverage:
-	@coverage run --source jsonpath_ng -m pytest
-	@coverage report
+	@echo "$(OK_COLOR)==> Running tests ...$(NO_COLOR)"
+	@tox
 
 tag:
 	@echo "$(OK_COLOR)==> Creating tag $(version) ...$(NO_COLOR)"

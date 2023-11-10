@@ -6,13 +6,15 @@
 \#(
 .\#*
 
-# Built artifacts
+# Build and test artifacts
 /README.txt
 /dist
 /*.egg-info
 parser.out
-.coverage
 .cache
+.coverage
+.coverage.*
+.tox/
 
 build
 /jsonpath_rw/VERSION
