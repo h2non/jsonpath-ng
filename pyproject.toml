@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Escalate warnings to errors.
+    "error",
+
+    # The ply package doesn't close its debug log file. Ignore this warning.
+    "ignore::ResourceWarning",
+]

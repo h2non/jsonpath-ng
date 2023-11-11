@@ -24,10 +24,10 @@ lint:
 
 test: clean
 	@echo "$(OK_COLOR)==> Runnings tests ...$(NO_COLOR)"
-	@py.test -s -v --capture sys --cov jsonpath_ng --cov-report term-missing
+	@pytest -s -v --capture sys --cov jsonpath_ng --cov-report term-missing
 
 coverage:
-	@coverage run --source jsonpath_ng -m py.test
+	@coverage run --source jsonpath_ng -m pytest
 	@coverage report
 
 tag:
@@ -47,7 +47,7 @@ history:
 
 clean:
 	@echo "$(OK_COLOR)==> Cleaning up files that are already in .gitignore...$(NO_COLOR)"
-	@for pattern in `cat .gitignore`; do find . -name "*/$$pattern" -delete; done
+	@git clean -Xf
 
 publish:
 	@echo "$(OK_COLOR)==> Releasing package ...$(NO_COLOR)"

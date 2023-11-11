@@ -1,10 +1,4 @@
-from __future__ import (
-    print_function,
-    absolute_import,
-    division,
-    generators,
-    nested_scopes,
-)
+import logging
 import sys
 import os.path
 
@@ -21,7 +15,7 @@ def parse(string):
     return JsonPathParser().parse(string)
 
 
-class JsonPathParser(object):
+class JsonPathParser:
     '''
     An LALR-parser for JsonPath
     '''
@@ -55,7 +49,8 @@ class JsonPathParser(object):
 
         parsing_table_module = '_'.join([module_name, start_symbol, 'parsetab'])
 
-        # And we regenerate the parse table every time; it doesn't actually take that long!
+        # And we regenerate the parse table every time;
+        # it doesn't actually take that long!
         new_parser = ply.yacc.yacc(module=self,
                                    debug=self.debug,
                                    tabmodule = parsing_table_module,
@@ -78,6 +73,8 @@ class JsonPathParser(object):
     ]
 
     def p_error(self, t):
+        if t is None:
+            raise JsonPathParserError('Parse error near the end of string!')
         raise JsonPathParserError('Parse error at %s:%s near token %s (%s)'
                                   % (t.lineno, t.col, t.value, t.type))
 
@@ -172,8 +169,9 @@ class JsonPathParser(object):
         p[0] = Slice()
 
     def p_slice(self, p): # Currently does not support `step`
-        "slice : maybe_int ':' maybe_int"
-        p[0] = Slice(start=p[1], end=p[3])
+        """slice : maybe_int ':' maybe_int
+                 | maybe_int ':' maybe_int ':' maybe_int """
+        p[0] = Slice(*p[1::2])
 
     def p_maybe_int(self, p):
         """maybe_int : NUMBER
@@ -184,7 +182,7 @@ class JsonPathParser(object):
         'empty :'
         p[0] = None
 
-class IteratorToTokenStream(object):
+class IteratorToTokenStream:
     def __init__(self, iterator):
         self.iterator = iterator
 

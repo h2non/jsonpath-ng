@@ -1,9 +1,6 @@
-from __future__ import unicode_literals, print_function, absolute_import, division, generators, nested_scopes
 import logging
-import six
-from six.moves import xrange
 from itertools import *  # noqa
-from .exceptions import JSONPathError
+from jsonpath_ng.lexer import JsonPathLexer
 
 # Get logger name
 logger = logging.getLogger(__name__)
@@ -16,7 +13,7 @@ NOT_SET = object()
 LIST_KEY = object()
 
 
-class JSONPath(object):
+class JSONPath:
     """
     The base class for JSONPath abstract syntax; those
     methods stubbed here are the interface to supported
@@ -78,7 +75,7 @@ class JSONPath(object):
             return DatumInContext(value, path=Root(), context=None)
 
 
-class DatumInContext(object):
+class DatumInContext:
     """
     Represents a datum along a path from a context.
 
@@ -220,6 +217,9 @@ class Root(JSONPath):
     def __eq__(self, other):
         return isinstance(other, Root)
 
+    def __hash__(self):
+        return hash('$')
+
 
 class This(JSONPath):
     """
@@ -243,6 +243,9 @@ class This(JSONPath):
 
     def __eq__(self, other):
         return isinstance(other, This)
+
+    def __hash__(self):
+        return hash('this')
 
 
 class Child(JSONPath):
@@ -302,6 +305,9 @@ class Child(JSONPath):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.left, self.right)
 
+    def __hash__(self):
+        return hash((self.left, self.right))
+
 
 class Parent(JSONPath):
     """
@@ -322,6 +328,9 @@ class Parent(JSONPath):
 
     def __repr__(self):
         return 'Parent()'
+
+    def __hash__(self):
+        return hash('parent')
 
 
 class Where(JSONPath):
@@ -356,6 +365,9 @@ class Where(JSONPath):
 
     def __eq__(self, other):
         return isinstance(other, Where) and other.left == self.left and other.right == self.right
+
+    def __hash__(self):
+        return hash((self.left, self.right))
 
 class Descendants(JSONPath):
     """
@@ -469,6 +481,9 @@ class Descendants(JSONPath):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.left, self.right)
 
+    def __hash__(self):
+        return hash((self.left, self.right))
+
 
 class Union(JSONPath):
     """
@@ -490,6 +505,12 @@ class Union(JSONPath):
     def find(self, data):
         return self.left.find(data) + self.right.find(data)
 
+    def __eq__(self, other):
+        return isinstance(other, Union) and self.left == other.left and self.right == other.right
+
+    def __hash__(self):
+        return hash((self.left, self.right))
+
 class Intersect(JSONPath):
     """
     JSONPath for bits that match *both* patterns.
@@ -510,6 +531,12 @@ class Intersect(JSONPath):
 
     def find(self, data):
         raise NotImplementedError()
+
+    def __eq__(self, other):
+        return isinstance(other, Intersect) and self.left == other.left and self.right == other.right
+
+    def __hash__(self):
+        return hash((self.left, self.right))
 
 
 class Fields(JSONPath):
@@ -588,13 +615,23 @@ class Fields(JSONPath):
         return data
 
     def __str__(self):
-        return ','.join(map(str, self.fields))
+        # If any JsonPathLexer.literals are included in field name need quotes
+        # This avoids unnecessary quotes to keep strings short.
+        # Test each field whether it contains a literal and only then add quotes
+        # The test loops over all literals, could possibly optimize to short circuit if one found
+        fields_as_str = ("'" + str(f) + "'" if any([l in f for l in JsonPathLexer.literals]) else
+                         str(f) for f in self.fields)
+        return ','.join(fields_as_str)
+
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, ','.join(map(repr, self.fields)))
 
     def __eq__(self, other):
         return isinstance(other, Fields) and tuple(self.fields) == tuple(other.fields)
+
+    def __hash__(self):
+        return hash(tuple(self.fields))
 
 
 class Index(JSONPath):
@@ -662,6 +699,9 @@ class Index(JSONPath):
             pad = self.index - len(value) + 1
             value += [{} for __ in range(pad)]
 
+    def __hash__(self):
+        return hash(self.index)
+
 
 class Slice(JSONPath):
     """
@@ -700,13 +740,13 @@ class Slice(JSONPath):
             return []
         # Here's the hack. If it is a dictionary or some kind of constant,
         # put it in a single-element list
-        if (isinstance(datum.value, dict) or isinstance(datum.value, six.integer_types) or isinstance(datum.value, six.string_types)):
+        if (isinstance(datum.value, dict) or isinstance(datum.value, int) or isinstance(datum.value, str)):
             return self.find(DatumInContext([datum.value], path=datum.path, context=datum.context))
 
         # Some iterators do not support slicing but we can still
         # at least work for '*'
-        if self.start == None and self.end == None and self.step == None:
-            return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in xrange(0, len(datum.value))]
+        if self.start is None and self.end is None and self.step is None:
+            return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in range(0, len(datum.value))]
         else:
             return [DatumInContext(datum.value[i], path=Index(i), context=datum) for i in range(0, len(datum.value))[self.start:self.end:self.step]]
 
@@ -728,7 +768,7 @@ class Slice(JSONPath):
         return data
 
     def __str__(self):
-        if self.start == None and self.end == None and self.step == None:
+        if self.start is None and self.end is None and self.step is None:
             return '[*]'
         else:
             return '[%s%s%s]' % (self.start or '',
@@ -741,6 +781,9 @@ class Slice(JSONPath):
     def __eq__(self, other):
         return isinstance(other, Slice) and other.start == self.start and self.end == other.end and other.step == self.step
 
+    def __hash__(self):
+        return hash((self.start, self.end, self.step))
+
 
 def _create_list_key(dict_):
     """
@@ -752,7 +795,7 @@ def _create_list_key(dict_):
     return new_list
 
 
-def _clean_list_keys(dict_):
+def _clean_list_keys(struct_):
     """
     Replace {LIST_KEY: ['foo', 'bar']} with ['foo', 'bar'].
 
@@ -760,12 +803,13 @@ def _clean_list_keys(dict_):
     ['foo', 'bar']
 
     """
-    for key, value in dict_.items():
-        if isinstance(value, dict):
-            dict_[key] = _clean_list_keys(value)
-        elif isinstance(value, list):
-            dict_[key] = [_clean_list_keys(v) if isinstance(v, dict) else v
-                          for v in value]
-    if LIST_KEY in dict_:
-        return dict_[LIST_KEY]
-    return dict_
+    if(isinstance(struct_, list)):
+        for ind, value in enumerate(struct_):
+            struct_[ind] = _clean_list_keys(value)
+    elif(isinstance(struct_, dict)):
+        if(LIST_KEY in struct_):
+            return _clean_list_keys(struct_[LIST_KEY])
+        else:
+            for key, value in struct_.items():
+                struct_[key] = _clean_list_keys(value)
+    return struct_

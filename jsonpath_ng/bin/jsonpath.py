@@ -5,9 +5,6 @@
 # terms of the Do What The Fuck You Want To Public License, Version 2,
 # as published by Sam Hocevar. See the COPYING file for more details.
 
-# Use modern Python
-from __future__ import unicode_literals, print_function, absolute_import
-
 # Standard Library imports
 import json
 import sys

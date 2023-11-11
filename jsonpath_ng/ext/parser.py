@@ -94,6 +94,8 @@ class ExtentedJsonPathParser(parser.JsonPathParser):
         "jsonpath : NAMED_OPERATOR"
         if p[1] == 'len':
             p[0] = _iterable.Len()
+        elif p[1] == 'keys':
+            p[0] = _iterable.Keys()
         elif p[1] == 'sorted':
             p[0] = _iterable.SortedThis()
         elif p[1].startswith("split("):

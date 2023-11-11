@@ -15,9 +15,9 @@ import re
 from .. import DatumInContext, This
 
 
-SUB = re.compile("sub\(/(.*)/,\s+(.*)\)")
-SPLIT = re.compile("split\((.),\s+(\d+),\s+(\d+|-1)\)")
-STR = re.compile("str\(\)")
+SUB = re.compile(r"sub\(/(.*)/,\s+(.*)\)")
+SPLIT = re.compile(r"split\((.),\s+(\d+),\s+(\d+|-1)\)")
+STR = re.compile(r"str\(\)")
 
 
 class DefintionInvalid(Exception):

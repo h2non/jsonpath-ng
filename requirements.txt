@@ -1,4 +1,2 @@
 ply
-decorator
-six
 setuptools>=18.5

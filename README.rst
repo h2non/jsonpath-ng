@@ -11,7 +11,7 @@ About
 -----
 
 This library provides a robust and significantly extended implementation
-of JSONPath for Python. It is tested with CPython 2.6, 2.7 & 3.x.
+of JSONPath for Python. It is tested with CPython 3.7 and higher.
 
 This library differs from other JSONPath implementations in that it is a
 full *language* implementation, meaning the JSONPath expressions are
@@ -49,6 +49,23 @@ Basic examples:
     # Matches remember where they came from
     >>> [str(match.full_path) for match in jsonpath_expr.find({'foo': [{'baz': 1}, {'baz': 2}]})]
     ['foo.[0].baz', 'foo.[1].baz']
+
+    # Modifying values matching the path
+    >>> jsonpath_expr.update( {'foo': [{'baz': 1}, {'baz': 2}]}, 3)
+    {'foo': [{'baz': 3}, {'baz': 3}]}
+
+    # Modifying one of the values matching the path
+    >>> matches = jsonpath_expr.find({'foo': [{'baz': 1}, {'baz': 2}]})
+    >>> matches[0].full_path.update( {'foo': [{'baz': 1}, {'baz': 2}]}, 3)
+    {'foo': [{'baz': 3}, {'baz': 2}]}
+
+    # Removing all values matching a path
+    >>> jsonpath_expr.filter(lambda d: True, {'foo': [{'baz': 1}, {'baz': 2}]})
+    {'foo': [{}, {}]}
+
+    # Removing values containing particular data matching path
+    >>> jsonpath_expr.filter(lambda d: d == 2, {'foo': [{'baz': 1}, {'baz': 2}]})
+    {'foo': [{'baz': 1}, {}]}
 
     # And this can be useful for automatically providing ids for bits of data that do not have them (currently a global switch)
     >>> jsonpath.auto_id_field = 'id'
@@ -178,7 +195,7 @@ Extras
    will be replaced by the JSONPath to it, giving automatic unique ids
    to any piece of data. These ids will take into account any ids
    already present as well.
--  *Named operators*: Instead of using ``@`` to reference the currently
+-  *Named operators*: Instead of using ``@`` to reference the current
    object, this library uses ```this```. In general, any string
    contained in backquotes can be made to be a new operator, currently
    by extending the library.
@@ -187,29 +204,42 @@ Extras
 Extensions
 ----------
 
-+--------------+----------------------------------------------+
-| name         | Example                                      |
-+==============+==============================================+
-| len          | - $.objects.`len`                            |
-+--------------+----------------------------------------------+
-| sub          | - $.field.`sub(/foo\\\\+(.*)/, \\\\1)`       |
-+--------------+----------------------------------------------+
-| split        | - $.field.`split(+, 2, -1)`                  |
-|              | - $.field.`split(sep, segement, maxsplit)`   |
-+--------------+----------------------------------------------+
-| sorted       | - $.objects.`sorted`                         |
-|              | - $.objects[\\some_field]                    |
-|              | - $.objects[\\some_field,/other_field]       |
-+--------------+----------------------------------------------+
-| filter       | - $.objects[?(@some_field > 5)]              |
-|              | - $.objects[?some_field = "foobar")]         |
-|              | - $.objects[?some_field =~ "foobar")]        |
-|              | - $.objects[?some_field > 5 & other < 2)]    |
-+--------------+----------------------------------------------+
-| arithmetic   | - $.foo + "_" + $.bar                        |
-| (-+*/)       | - $.foo * 12                                 |
-|              | - $.objects[*].cow + $.objects[*].cat        |
-+--------------+----------------------------------------------+
+To use the extensions below you must import from `jsonpath_ng.ext`.
+
++--------------+-----------------------------------------------+
+| name         | Example                                       |
++==============+===============================================+
+| len          | - ``$.objects.`len```                         |
++--------------+-----------------------------------------------+
+| sub          | - ``$.field.`sub(/foo\\\\+(.*)/, \\\\1)```    |
+|              | - ``$.field.`sub(/regex/, replacement)```     |
++--------------+-----------------------------------------------+
+| split        | - ``$.field.`split(+, 2, -1)```               |
+|              | - ``$.field.`split(sep, segement, maxsplit)```|
++--------------+-----------------------------------------------+
+| sorted       | - ``$.objects.`sorted```                      |
+|              | - ``$.objects[\\some_field]``                 |
+|              | - ``$.objects[\\some_field,/other_field]``    |
++--------------+-----------------------------------------------+
+| filter       | - ``$.objects[?(@some_field > 5)]``           |
+|              | - ``$.objects[?some_field = "foobar"]``       |
+|              | - ``$.objects[?some_field =~ "foobar"]``      |
+|              | - ``$.objects[?some_field > 5 & other < 2]``  |
+|              |                                               |
+|              | Supported operators:                          |
+|              | - Equality: ==, =, !=                         |
+|              | - Comparison: >, >=, <, <=                    |
+|              | - Regex match: =~                             |
+|              |                                               |
+|              | Combine multiple criteria with '&'.           |
+|              |                                               |
+|              | Properties can only be compared to static     |
+|              | values.                                       |
++--------------+-----------------------------------------------+
+| arithmetic   | - ``$.foo + "_" + $.bar``                     |
+| (-+*/)       | - ``$.foo * 12``                              |
+|              | - ``$.objects[*].cow + $.objects[*].cat``     |
++--------------+-----------------------------------------------+
 
 About arithmetic and string
 ---------------------------
@@ -228,10 +258,10 @@ Example with data::
         'fish': 'bar'
     }
 
-| **cow + fish** returns **cowfish**
-| **$.cow + $.fish** returns **foobar**
-| **$.cow + "_" + $.fish** returns **foo_bar**
-| **$.cow + "_" + fish** returns **foo_fish**
+| ``cow + fish`` returns ``cowfish``
+| ``$.cow + $.fish`` returns ``foobar``
+| ``$.cow + "_" + $.fish`` returns ``foo_bar``
+| ``$.cow + "_" + fish`` returns ``foo_fish``
 
 About arithmetic and list
 -------------------------
@@ -245,7 +275,7 @@ Example with data::
         {'cow': 4, 'cat': 6}
     ]}
 
-| **$.objects[\*].cow + $.objects[\*].cat** returns **[6, 9]**
+| ``$.objects[\*].cow + $.objects[\*].cat`` returns ``[6, 9]``
 
 More to explore
 ---------------
@@ -322,9 +352,7 @@ limitations under the License.
 
 .. |PyPi downloads| image:: https://pypip.in/d/jsonpath-ng/badge.png
    :target: https://pypi.python.org/pypi/jsonpath-ng
-.. |Build Status| image:: https://travis-ci.org/h2non/jsonpath-ng.svg?branch=master
-   :target: https://travis-ci.org/h2non/jsonpath-ng
+.. |Build Status| image:: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml
 .. |PyPI| image:: https://img.shields.io/pypi/v/jsonpath-ng.svg?maxAge=2592000?style=flat-square
    :target: https://pypi.python.org/pypi/jsonpath-ng
-.. |Documentation Status| image:: https://img.shields.io/badge/docs-latest-green.svg?style=flat
-   :target: http://jsonpath-ng.readthedocs.io/en/latest/?badge=latest
