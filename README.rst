@@ -5,7 +5,7 @@ A final implementation of JSONPath for Python that aims to be standard compliant
 and binary comparison operators, as defined in the original `JSONPath proposal`_.
 
 This packages merges both `jsonpath-rw`_ and `jsonpath-rw-ext`_ and
-provides several AST API enhancements, such as the ability to update or removes nodes in the tree.
+provides several AST API enhancements, such as the ability to update or remove nodes in the tree.
 
 About
 -----
