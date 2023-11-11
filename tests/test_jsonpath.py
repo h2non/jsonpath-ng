@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from jsonpath_ng.ext.parser import parse as ext_parse
@@ -124,6 +126,16 @@ update_test_cases = (
         3,
         {"foo": {"bar": 3, "flag": 1}, "baz": {"bar": 2}},
     ),
+    #
+    # Lambdas
+    # -------
+    #
+    (
+        "foo[*].baz",
+        {'foo': [{'baz': 1}, {'baz': 2}]},
+        lambda x, y, z: x + 1,
+        {'foo': [{'baz': 2}, {'baz': 3}]}
+    ),
 )
 
 
@@ -133,7 +145,8 @@ update_test_cases = (
 )
 @parsers
 def test_update(parse, expression, data, update_value, expected_value):
-    result = parse(expression).update(data, update_value)
+    data_copy = copy.deepcopy(data)
+    result = parse(expression).update(data_copy, update_value)
     assert result == expected_value
 
 
