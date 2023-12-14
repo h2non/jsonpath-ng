@@ -20,8 +20,8 @@ def fast_path(string):
     parts = string.split(".")
     path = Child(Fields(parts[0]), Fields(parts[1]))
     for i in range(2, len(parts)):
-        path = Child(jp, Fields(parts[i]))
-    return jp
+        path = Child(path, Fields(parts[i]))
+    return path
 
 
 def parse(string):
