@@ -1,4 +1,5 @@
 import logging
+import re
 import sys
 import os.path
 
@@ -9,6 +10,18 @@ from jsonpath_ng.jsonpath import *
 from jsonpath_ng.lexer import JsonPathLexer
 
 logger = logging.getLogger(__name__)
+
+simple_path_expr = re.compile(
+    r"[A-Za-z_]+[A-Za-z0-9_]*([.][A-Za-z_][A-Za-z0-9_]*)+"
+)
+
+
+def fast_path(string):
+    parts = string.split(".")
+    path = Child(Fields(parts[0]), Fields(parts[1]))
+    for i in range(2, len(parts)):
+        path = Child(jp, Fields(parts[i]))
+    return jp
 
 
 def parse(string):
@@ -34,6 +47,8 @@ class JsonPathParser:
         self.lexer_class = lexer_class or JsonPathLexer # Crufty but works around statefulness in PLY
 
     def parse(self, string, lexer = None):
+        if simple_path_expr.match(string):
+            return fast_path(string)
         lexer = lexer or self.lexer_class()
         return self.parse_token_stream(lexer.tokenize(string))
 
