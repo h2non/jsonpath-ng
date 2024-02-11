@@ -136,6 +136,16 @@ update_test_cases = (
         lambda x, y, z: x + 1,
         {'foo': [{'baz': 2}, {'baz': 3}]}
     ),
+    #
+    # Update with Boolean in data
+    # ---------------------------
+    #
+    (
+        "$.*.number",
+        {'foo': ['abc', 'def'], 'bar': {'number': 123456}, 'boolean': True},
+        '98765',
+        {'foo': ['abc', 'def'], 'bar': {'number': '98765'}, 'boolean': True},
+    ),
 )
 
 
