@@ -33,12 +33,6 @@ class JsonPathParser:
         self.debug = debug
         self.lexer_class = lexer_class or JsonPathLexer # Crufty but works around statefulness in PLY
 
-    def parse(self, string, lexer = None):
-        lexer = lexer or self.lexer_class()
-        return self.parse_token_stream(lexer.tokenize(string))
-
-    def parse_token_stream(self, token_iterator, start_symbol='jsonpath'):
-
         # Since PLY has some crufty aspects and dumps files, we try to keep them local
         # However, we need to derive the name of the output Python file :-/
         output_directory = os.path.dirname(__file__)
@@ -47,19 +41,24 @@ class JsonPathParser:
         except:
             module_name = __name__
 
+        start_symbol = 'jsonpath'
         parsing_table_module = '_'.join([module_name, start_symbol, 'parsetab'])
 
-        # And we regenerate the parse table every time;
-        # it doesn't actually take that long!
-        new_parser = ply.yacc.yacc(module=self,
-                                   debug=self.debug,
-                                   tabmodule = parsing_table_module,
-                                   outputdir = output_directory,
-                                   write_tables=0,
-                                   start = start_symbol,
-                                   errorlog = logger)
+        # Generate the parse table
+        self.parser = ply.yacc.yacc(module=self,
+                                    debug=self.debug,
+                                    tabmodule = parsing_table_module,
+                                    outputdir = output_directory,
+                                    write_tables=0,
+                                    start = start_symbol,
+                                    errorlog = logger)
 
-        return new_parser.parse(lexer = IteratorToTokenStream(token_iterator))
+    def parse(self, string, lexer = None):
+        lexer = lexer or self.lexer_class()
+        return self.parse_token_stream(lexer.tokenize(string))
+
+    def parse_token_stream(self, token_iterator):
+        return self.parser.parse(lexer = IteratorToTokenStream(token_iterator))
 
     # ===================== PLY Parser specification =====================
 
