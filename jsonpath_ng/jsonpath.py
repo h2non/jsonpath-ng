@@ -282,6 +282,8 @@ class Child(JSONPath):
                 # Extra special case: auto ids do not have children,
                 # so cut it off right now rather than auto id the auto id
                 continue
+            if not subdata.value:
+                subdata.value = {}    
             for submatch in self.right.find_or_create(subdata):
                 submatches.append(submatch)
         return submatches
