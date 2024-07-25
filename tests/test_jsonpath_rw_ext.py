@@ -395,6 +395,36 @@ test_cases = (
         id="split2",
     ),
     pytest.param(
+        "payload.`split(',', 2, -1)`",
+        {"payload": "foo,bar,baz"},
+        ["baz"],
+        id="split3",
+    ),
+    pytest.param(
+        'payload.`split(", ", 2, -1)`',
+        {"payload": "foo, bar, baz"},
+        ["baz"],
+        id="split4",
+    ),
+    pytest.param(
+        'payload.`split(", ", *, -1)`',
+        {"payload": "foo, bar, baz"},
+        [["foo", "bar", "baz"]],
+        id="split5",
+    ),
+    pytest.param(
+        'payload.`split(", ", -1, -1)`',
+        {"payload": "foo, bar, baz"},
+        ["baz"],
+        id="split6",
+    ),
+    pytest.param(
+        "payload.`split(|, -1, 1)`",
+        {"payload": "foo|bar|baz"},
+        ["bar|baz"],
+        id="split7",
+    ),
+    pytest.param(
         "foo[?(@.baz==1)]",
         {"foo": [{"baz": 1}, {"baz": 2}]},
         [{"baz": 1}],

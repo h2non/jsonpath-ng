@@ -215,6 +215,8 @@ To use the extensions below you must import from `jsonpath_ng.ext`.
 |              | - ``$.field.`sub(/regex/, replacement)```     |
 +--------------+-----------------------------------------------+
 | split        | - ``$.field.`split(+, 2, -1)```               |
+|              | - ``$.field.`split(",", *, -1)```             |
+|              | - ``$.field.`split(' ', -1, -1)```            |
 |              | - ``$.field.`split(sep, segement, maxsplit)```|
 +--------------+-----------------------------------------------+
 | sorted       | - ``$.objects.`sorted```                      |
