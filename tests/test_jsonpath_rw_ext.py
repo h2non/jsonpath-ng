@@ -69,6 +69,12 @@ test_cases = (
         id="keys_dict",
     ),
     pytest.param(
+        "objects.cow.`path`",
+        {"objects": {"cow": "moo", "cat": "neigh"}},
+        "cow",
+        id="path_dict",
+    ),
+    pytest.param(
         "objects[?cow]",
         {"objects": [{"cow": "moo"}, {"cat": "neigh"}]},
         [{"cow": "moo"}],
