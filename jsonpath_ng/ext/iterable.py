@@ -130,7 +130,6 @@ class Path(JSONPath):
             return []
         else:
             return [DatumInContext(value,
-            return [DatumInContext(value,
                                    context=datum,
                                    path=Path())]
 
