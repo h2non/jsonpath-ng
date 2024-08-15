@@ -16,7 +16,13 @@ from .. import DatumInContext, This
 
 
 SUB = re.compile(r"sub\(/(.*)/,\s+(.*)\)")
-SPLIT = re.compile(r"split(?:\s+)?\((?:\s+)?(?P<j>(?:(?:'|\"))?)(.+)(?P=j)(?:\s+)?,(?:\s+)?((?:(?:\-)?\d+|\*))(?:\s+)?,(?:\s+)?((?:\-)?\d+)(?:\s+)?\)")
+# Regex generated using the EZRegex package (ezregex.org)
+# EZRegex code: 
+# param1 = group(optional(either("'", '"')), name='quote') + group(chunk) + earlier_group('quote')
+# param2 = group(either(optional('-') + number, '*'))
+# param3 = group(optional('-') + number)
+# pattern = 'split' + ow + '(' + ow + param1 + ow + ',' + ow + param2 + ow + ',' + ow + param3 + ow + ')'
+SPLIT = re.compile(r"split(?:\s+)?\((?:\s+)?(?P<quote>(?:(?:'|\"))?)(.+)(?P=quote)(?:\s+)?,(?:\s+)?((?:(?:\-)?\d+|\*))(?:\s+)?,(?:\s+)?((?:\-)?\d+)(?:\s+)?\)")
 STR = re.compile(r"str\(\)")
 
 
