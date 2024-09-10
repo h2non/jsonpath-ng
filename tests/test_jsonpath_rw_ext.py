@@ -117,6 +117,12 @@ test_cases = (
         id="filter_eq3",
     ),
     pytest.param(
+        'objects[?cow!="moo"]',
+        {"objects": [{"cow": "moo"}, {"cow": "neigh"}]},
+        [{"cow": "neigh"}],
+        id="filter_ne",
+    ),
+    pytest.param(
         "objects[?cow>5]",
         {"objects": [{"cow": 8}, {"cow": 7}, {"cow": 5}, {"cow": "neigh"}]},
         [{"cow": 8}, {"cow": 7}],
@@ -483,6 +489,46 @@ test_cases = (
         },
         ["green"],
         id="boolean-filter-string-true-string-literal",
+    ),
+    pytest.param(
+        '$[?!@..["type"]]',
+        [
+            {
+                "name": "foo",
+                "data": [{"value": "bar"}]
+            },
+            {
+                "name": "foo",
+                "data": [{"value": "bar", "type": "foo"}]
+            }
+        ],
+        [
+            {
+                "name": "foo",
+                "data": [{"value": "bar"}]
+            }
+        ],
+        id="negated_relative_query_existence"
+    ),
+    pytest.param(
+        '$[?!data[*].type]',
+        [
+            {
+                "name": "foo",
+                "data": [{"value": "bar"}]
+            },
+            {
+                "name": "foo",
+                "data": [{"value": "bar", "type": "foo"}]
+            }
+        ],
+        [
+            {
+                "name": "foo",
+                "data": [{"value": "bar"}]
+            }
+        ],
+        id="negated_relative_query_existence_implicit_this"
     ),
 )
 

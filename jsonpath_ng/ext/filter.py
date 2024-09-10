@@ -96,6 +96,9 @@ class Expression(JSONPath):
     def find(self, datum):
         datum = self.target.find(DatumInContext.wrap(datum))
 
+        if self.op == "!":
+            # Negated relative query existence test
+            return not datum
         if not datum:
             return []
         if self.op is None:
