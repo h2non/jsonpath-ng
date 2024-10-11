@@ -30,11 +30,6 @@ class ExtendedJsonPathLexer(lexer.JsonPathLexer):
 
     t_FILTER_OP = r'=~|==?|<=|>=|!=|<|>'
 
-    def t_BOOL(self, t):
-        r'true|false'
-        t.value = True if t.value == 'true' else False
-        return t
-
     def t_SORT_DIRECTION(self, t):
         r',?\s*(/|\\)'
         t.value = t.value[-1]
@@ -45,6 +40,11 @@ class ExtendedJsonPathLexer(lexer.JsonPathLexer):
         # NOTE(sileht): This fixes the ID expression to be
         # able to use @ for `This` like any json query
         t.type = self.reserved_words.get(t.value, 'ID')
+        return t
+
+    def t_BOOL(self, t):
+        r'true|false'
+        t.value = True if t.value == 'true' else False
         return t
 
     def t_FLOAT(self, t):

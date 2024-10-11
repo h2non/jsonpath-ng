@@ -13,6 +13,7 @@ parser_test_cases = (
     ("foo", Fields("foo")),
     ("*", Fields("*")),
     ("1", Fields("1")),
+    ("trueName", Fields("trueName")),
     ("baz,bizzle", Fields("baz", "bizzle")),
     ("[1]", Index(1)),
     ("[1:]", Slice(start=1)),
