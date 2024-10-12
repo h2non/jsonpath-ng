@@ -72,6 +72,8 @@ update_test_cases = (
     # -------
     #
     ("[0]", ["foo", "bar", "baz"], "test", ["test", "bar", "baz"]),
+    ("[0, 1]", ["foo", "bar", "baz"], "test", ["test", "test", "baz"]),
+    ("[0, 1]", ["foo", "bar", "baz"], ["test", "test 1"], ["test", "test 1", "baz"]),
     #
     # Slices
     # ------
@@ -166,7 +168,8 @@ update_test_cases = (
 @parsers
 def test_update(parse, expression, data, update_value, expected_value):
     data_copy = copy.deepcopy(data)
-    result = parse(expression).update(data_copy, update_value)
+    update_value_copy = copy.deepcopy(update_value)
+    result = parse(expression).update(data_copy, update_value_copy)
     assert result == expected_value
 
 
