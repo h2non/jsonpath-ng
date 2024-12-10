@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import List, Optional
 import logging
 from itertools import *  # noqa
 from jsonpath_ng.lexer import JsonPathLexer
@@ -20,7 +22,7 @@ class JSONPath:
     JSONPath semantics.
     """
 
-    def find(self, data):
+    def find(self, data) -> List[DatumInContext]:
         """
         All `JSONPath` types support `find()`, which returns an iterable of `DatumInContext`s.
         They keep track of the path followed to the current location, so if the calling code
@@ -99,7 +101,7 @@ class DatumInContext:
         else:
             return cls(data)
 
-    def __init__(self, value, path=None, context=None):
+    def __init__(self, value, path: Optional[JSONPath]=None, context: Optional[DatumInContext]=None):
         self.value = value
         self.path = path or This()
         self.context = None if context is None else DatumInContext.wrap(context)
@@ -113,7 +115,7 @@ class DatumInContext:
             return DatumInContext(value=self.value, path=path, context=context)
 
     @property
-    def full_path(self):
+    def full_path(self) -> JSONPath:
         return self.path if self.context is None else self.context.full_path.child(self.path)
 
     @property
@@ -193,7 +195,7 @@ class Root(JSONPath):
     The root is the topmost datum without any context attached.
     """
 
-    def find(self, data):
+    def find(self, data) -> List[DatumInContext]:
         if not isinstance(data, DatumInContext):
             return [DatumInContext(data, path=Root(), context=None)]
         else:
