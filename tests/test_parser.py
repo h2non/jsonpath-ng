@@ -10,6 +10,8 @@ parser_test_cases = (
     # Atomic
     # ------
     #
+    ("😀", Fields("😀")),
+    ("你好", Fields("你好")),
     ("foo", Fields("foo")),
     ("*", Fields("*")),
     ("1", Fields("1")),
