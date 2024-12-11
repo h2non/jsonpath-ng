@@ -102,9 +102,19 @@ class DatumInContext:
             return cls(data)
 
     def __init__(self, value, path: Optional[JSONPath]=None, context: Optional[DatumInContext]=None):
-        self.value = value
+        self.__value__ = value
         self.path = path or This()
         self.context = None if context is None else DatumInContext.wrap(context)
+
+    @property
+    def value(self):
+        return self.__value__
+
+    @value.setter
+    def value(self, value):
+        if self.context is not None and self.context.value is not None:
+            self.path.update(self.context.value, value)
+        self.__value__ = value
 
     def in_context(self, context, path):
         context = DatumInContext.wrap(context)
@@ -694,7 +704,7 @@ class Index(JSONPath):
         for index in self.indices:
             # invalid indices do not crash, return [] instead
             if datum.value and len(datum.value) > index:
-                rv += [DatumInContext(datum.value[index], path=self, context=datum)]
+                rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
 
     def update(self, data, val):
