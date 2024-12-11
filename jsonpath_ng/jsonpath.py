@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import List, Optional
 import logging
 from itertools import *  # noqa
 from jsonpath_ng.lexer import JsonPathLexer
@@ -20,7 +22,7 @@ class JSONPath:
     JSONPath semantics.
     """
 
-    def find(self, data):
+    def find(self, data) -> List[DatumInContext]:
         """
         All `JSONPath` types support `find()`, which returns an iterable of `DatumInContext`s.
         They keep track of the path followed to the current location, so if the calling code
@@ -99,10 +101,20 @@ class DatumInContext:
         else:
             return cls(data)
 
-    def __init__(self, value, path=None, context=None):
-        self.value = value
+    def __init__(self, value, path: Optional[JSONPath]=None, context: Optional[DatumInContext]=None):
+        self.__value__ = value
         self.path = path or This()
         self.context = None if context is None else DatumInContext.wrap(context)
+
+    @property
+    def value(self):
+        return self.__value__
+
+    @value.setter
+    def value(self, value):
+        if self.context is not None and self.context.value is not None:
+            self.path.update(self.context.value, value)
+        self.__value__ = value
 
     def in_context(self, context, path):
         context = DatumInContext.wrap(context)
@@ -113,7 +125,7 @@ class DatumInContext:
             return DatumInContext(value=self.value, path=path, context=context)
 
     @property
-    def full_path(self):
+    def full_path(self) -> JSONPath:
         return self.path if self.context is None else self.context.full_path.child(self.path)
 
     @property
@@ -193,7 +205,7 @@ class Root(JSONPath):
     The root is the topmost datum without any context attached.
     """
 
-    def find(self, data):
+    def find(self, data) -> List[DatumInContext]:
         if not isinstance(data, DatumInContext):
             return [DatumInContext(data, path=Root(), context=None)]
         else:
@@ -692,7 +704,7 @@ class Index(JSONPath):
         for index in self.indices:
             # invalid indices do not crash, return [] instead
             if datum.value and len(datum.value) > index:
-                rv += [DatumInContext(datum.value[index], path=self, context=datum)]
+                rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
 
     def update(self, data, val):

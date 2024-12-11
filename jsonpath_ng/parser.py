@@ -53,7 +53,7 @@ class JsonPathParser:
                                     start = start_symbol,
                                     errorlog = logger)
 
-    def parse(self, string, lexer = None):
+    def parse(self, string, lexer = None) -> JSONPath:
         lexer = lexer or self.lexer_class()
         return self.parse_token_stream(lexer.tokenize(string))
 
