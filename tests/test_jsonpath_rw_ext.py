@@ -484,6 +484,19 @@ test_cases = (
         ["green"],
         id="boolean-filter-string-true-string-literal",
     ),
+    pytest.param(
+        "foo[?flag = true].color",
+        {
+            "foo": [
+                {"color": "blue", "flag": True},
+                {"color": "green", "flag": 2},
+                {"color": "red", "flag": "hi"},
+                {"color": "gray", "flag": None},
+            ]
+        },
+        ["blue"],
+        id="boolean-filter-with-null",
+    ),
 )
 
 
