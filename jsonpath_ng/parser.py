@@ -293,11 +293,24 @@ class JsonPathParser:
     def p_slice(self, p): # Currently does not support `step`
         """slice : maybe_int ':' maybe_int
                  | maybe_int ':' maybe_int ':' maybe_int """
-        p[0] = Slice(*p[1::2])
+        args = p[1::2]
+        # Validate step is not zero
+        if len(args) == 3 and args[2] == 0:
+            raise JsonPathParserError('Slice step cannot be zero')
+        p[0] = Slice(*args)
 
     def p_maybe_int(self, p):
         """maybe_int : NUMBER
                      | empty"""
+        if p[1] is not None:
+            # Validate slice indices are within safe integer range
+            if not isinstance(p[1], int):
+                raise JsonPathParserError(f'Slice indices must be integers, not {type(p[1]).__name__}: {p[1]}')
+            if abs(p[1]) > 9007199254740991:
+                raise JsonPathParserError(f'Slice index {p[1]} exceeds maximum safe integer range')
+            # Check for negative zero in slices
+            if hasattr(p.slice[1], 'original_str') and p.slice[1].original_str == '-0':
+                raise JsonPathParserError('Negative zero (-0) is not allowed in slice expressions')
         p[0] = p[1]
 
 
