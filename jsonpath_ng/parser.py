@@ -205,6 +205,10 @@ class JsonPathParser:
         """union_element : '*'"""
         p[0] = Fields('*')
 
+    def p_union_element_slice(self, p):
+        """union_element : slice"""
+        p[0] = p[1]
+
     def p_jsonpath_parens(self, p):
         "jsonpath : '(' jsonpath ')'"
         p[0] = p[2]
