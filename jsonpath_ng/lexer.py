@@ -73,9 +73,10 @@ class JsonPathLexer:
     t_ignore = ' \t\r\n'
 
     def t_ID(self, t):
-        # CJK: [\u4E00-\u9FA5]
-        # EMOJI: [\U0001F600-\U0001F64F]
-        r'([a-zA-Z_]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])([a-zA-Z0-9_\-]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])*'
+        # Support broad Unicode range for identifiers per JSONPath RFC 9535
+        # Start char: Letter, underscore, or unicode symbols/pictographs
+        # Continue chars: Letter, number, underscore, hyphen, or unicode symbols/pictographs  
+        r'([a-zA-Z_]|[\u00A0-\uFFFF]|[\U00010000-\U0001FFFF])([a-zA-Z0-9_\-]|[\u00A0-\uFFFF]|[\U00010000-\U0001FFFF])*'
         t.type = self.reserved_words.get(t.value, 'ID')
         return t
 

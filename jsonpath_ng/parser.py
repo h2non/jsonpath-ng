@@ -209,15 +209,12 @@ class JsonPathParser:
         "jsonpath : '(' jsonpath ')'"
         p[0] = p[2]
 
-    # Legacy field parsing for dot notation
+    # Field parsing for dot notation - only identifiers and wildcards allowed
     def p_fields_or_any(self, p):
         """fields_or_any : fields
-                         | '*'
-                         | NUMBER"""
+                         | '*'"""
         if p[1] == '*':
             p[0] = ['*']
-        elif isinstance(p[1], int):
-            p[0] = str(p[1])
         else:
             p[0] = p[1]
 
