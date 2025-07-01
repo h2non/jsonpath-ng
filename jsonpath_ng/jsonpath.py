@@ -1361,6 +1361,11 @@ class FunctionCall(JSONPath):
                 return False
             
             try:
+                # Transform pattern for JSONPath RFC 9535 compliance
+                # The '.' metacharacter should match any character except Unicode control characters
+                if pattern == '.':
+                    pattern = '[^\\p{Cc}]' if USE_REGEX_MODULE else '[^\\x00-\\x1F\\x7F]'
+                
                 # For match(), we need to match the entire string, so use fullmatch() or anchor the pattern
                 if USE_REGEX_MODULE:
                     return bool(regex.fullmatch(pattern, value))
@@ -1381,6 +1386,11 @@ class FunctionCall(JSONPath):
                 return False
             
             try:
+                # Transform pattern for JSONPath RFC 9535 compliance
+                # The '.' metacharacter should match any character except Unicode control characters
+                if pattern == '.':
+                    pattern = '[^\\p{Cc}]' if USE_REGEX_MODULE else '[^\\x00-\\x1F\\x7F]'
+                
                 if USE_REGEX_MODULE:
                     return bool(regex.search(pattern, value))
                 else:
@@ -1421,13 +1431,9 @@ class FunctionCall(JSONPath):
                 return UNDEFINED
             
             if hasattr(self.arguments[0], 'find'):
-                # For value() function, we need to find matches in the root document context
-                # not the current filter context. We need to trace back to the root.
-                root_datum = datum
-                while root_datum.context is not None:
-                    root_datum = root_datum.context
-                
-                matches = self.arguments[0].find(root_datum)
+                # For value() function, evaluate the expression in the current filter context
+                # This allows @.a to be evaluated against the current item being filtered
+                matches = self.arguments[0].find(datum)
                 if len(matches) == 1:
                     return matches[0].value
                 else:
