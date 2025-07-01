@@ -999,6 +999,12 @@ class Filter(JSONPath):
                     # Comparison operands are in comparison context
                     check_expr(e.left, True)
                     check_expr(e.right, True)
+                    
+                    # Check for invalid function-to-boolean comparisons
+                    if isinstance(e.left, FunctionCall) and e.left.function_name in ['match', 'search'] and isinstance(e.right, Literal) and isinstance(e.right.value, bool):
+                        raise JsonPathParserError(f'Function {e.left.function_name}() result cannot be compared to boolean literal')
+                    elif isinstance(e.right, FunctionCall) and e.right.function_name in ['match', 'search'] and isinstance(e.left, Literal) and isinstance(e.left.value, bool):
+                        raise JsonPathParserError(f'Function {e.right.function_name}() result cannot be compared to boolean literal')
                 elif type_name in ['LogicalAnd', 'LogicalOr']:
                     # Logical operands cannot be bare literals
                     check_expr(e.left, in_comparison, is_logical_operand=True)

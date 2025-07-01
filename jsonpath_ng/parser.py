@@ -398,11 +398,15 @@ class JsonPathParser:
             if isinstance(arg, Literal):
                 raise JsonPathParserError('count() function argument must be a query expression, not a literal value')
         elif function_name == 'length':
-            # length() argument must be a singular query expression 
-            if isinstance(arg, Literal):
-                raise JsonPathParserError('length() function argument must be a query expression, not a literal value')
-            # Check for non-singular queries like @.* 
+            # length() accepts both literals and query expressions
+            # Check for non-singular queries (but only for query expressions)
             if hasattr(arg, 'fields') and '*' in getattr(arg, 'fields', []):
+                raise JsonPathParserError('length() function argument must be a singular query expression')
+            # Check for descendants like @.* which are also non-singular
+            elif isinstance(arg, Descendants):
+                raise JsonPathParserError('length() function argument must be a singular query expression')
+            # Check for Child nodes with wildcard like @.* (parsed as Child(CurrentNode(), Fields('*')))
+            elif isinstance(arg, Child) and hasattr(arg.right, 'fields') and '*' in getattr(arg.right, 'fields', []):
                 raise JsonPathParserError('length() function argument must be a singular query expression')
         elif function_name in ['match', 'search']:
             # match/search need exactly 2 arguments
