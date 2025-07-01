@@ -284,7 +284,7 @@ class JsonPathParser:
         p[0] = CurrentNode()
 
     def p_filter_expr_path(self, p):
-        "filter_expr : jsonpath"
+        "filter_expr : filter_path"
         p[0] = p[1]
 
     def p_filter_expr_literal_number(self, p):
@@ -310,6 +310,31 @@ class JsonPathParser:
     def p_filter_expr_parens(self, p):
         "filter_expr : '(' filter_expr ')'"
         p[0] = p[2]
+    
+    # Filter path expressions - only basic paths allowed in filters per RFC 9535
+    def p_filter_path_current(self, p):
+        "filter_path : CURRENT"
+        p[0] = CurrentNode()
+    
+    def p_filter_path_current_field(self, p):
+        "filter_path : CURRENT '.' ID"
+        p[0] = Child(CurrentNode(), Fields(p[3]))
+    
+    def p_filter_path_current_index(self, p):
+        "filter_path : CURRENT '[' NUMBER ']'"
+        p[0] = Child(CurrentNode(), Index(p[3]))
+    
+    def p_filter_path_current_field_index(self, p):
+        "filter_path : CURRENT '.' ID '[' NUMBER ']'"
+        p[0] = Child(CurrentNode(), Child(Fields(p[3]), Index(p[5])))
+    
+    def p_filter_path_current_index_field(self, p):
+        "filter_path : CURRENT '[' NUMBER ']' '.' ID"
+        p[0] = Child(CurrentNode(), Child(Index(p[3]), Fields(p[6])))
+    
+    def p_filter_path_field(self, p):
+        "filter_path : ID"
+        p[0] = Fields(p[1])
 
 class IteratorToTokenStream:
     def __init__(self, iterator):
