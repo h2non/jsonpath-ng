@@ -955,33 +955,38 @@ class Filter(JSONPath):
         from jsonpath_ng.exceptions import JsonPathParserError
         
         # Check for invalid constructs recursively
-        def check_expr(e):
-            if isinstance(e, Slice):
-                raise JsonPathParserError('Slice notation (@[start:end]) is not allowed in filter expressions')
-            elif isinstance(e, Descendants):
-                raise JsonPathParserError('Descendant notation (@..field) is not allowed in filter expressions')
-            elif isinstance(e, Union):
-                raise JsonPathParserError('Union notation (@[a,b]) is not allowed in filter expressions')
-            elif isinstance(e, Fields) and '*' in e.fields:
-                raise JsonPathParserError('Wildcard (@[*] or @.*) is not allowed in filter expressions')
+        def check_expr(e, in_comparison=False):
+            # Wildcards in comparisons are not allowed
+            if isinstance(e, Fields) and in_comparison and '*' in e.fields:
+                raise JsonPathParserError('Wildcard notation in comparisons is not allowed in filter expressions')
+            # Slices are more restrictive
+            elif isinstance(e, Slice) and in_comparison:
+                raise JsonPathParserError('Slice notation in comparisons is not allowed in filter expressions')
+            # Descendants in comparisons are not allowed 
+            elif isinstance(e, Descendants) and in_comparison:
+                raise JsonPathParserError('Descendant notation in comparisons is not allowed in filter expressions')
+            # Unions in comparisons are not allowed
+            elif isinstance(e, Union) and in_comparison:
+                raise JsonPathParserError('Union notation in comparisons is not allowed in filter expressions')
             elif isinstance(e, Child):
                 # Check both left and right sides of the child expression
-                check_expr(e.left)
-                check_expr(e.right)
+                check_expr(e.left, in_comparison)
+                check_expr(e.right, in_comparison)
             elif hasattr(e, 'left') and hasattr(e, 'right'):
-                # For binary operations like comparisons and logical operations
-                check_expr(e.left)
-                check_expr(e.right)
+                # For binary operations like comparisons - mark as in_comparison context
+                is_comparison = type(e).__name__ == 'Comparison'
+                check_expr(e.left, is_comparison)
+                check_expr(e.right, is_comparison)
             elif hasattr(e, 'expr'):
                 # For unary operations like NOT
-                check_expr(e.expr)
+                check_expr(e.expr, in_comparison)
             elif hasattr(e, 'expression'):
                 # For Filter expressions
-                check_expr(e.expression)
+                check_expr(e.expression, in_comparison)
             elif hasattr(e, 'arguments'):
                 # For function calls
                 for arg in e.arguments:
-                    check_expr(arg)
+                    check_expr(arg, in_comparison)
         
         check_expr(expr)
     
