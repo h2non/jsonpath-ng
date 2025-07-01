@@ -956,10 +956,13 @@ class Filter(JSONPath):
         from jsonpath_ng.exceptions import JsonPathParserError
         
         # Check for invalid constructs recursively
-        def check_expr(e, in_comparison=False, is_root=False):
-            # Bare literals at root level are not allowed (must be in comparisons)
-            if is_root and isinstance(e, Literal):
+        def check_expr(e, in_comparison=False, is_root=False, is_logical_operand=False):
+            # Bare literals are not allowed at root level or as operands to logical operations
+            if (is_root or is_logical_operand) and isinstance(e, Literal):
                 raise JsonPathParserError('Bare literal values are not allowed in filter expressions, literals must be compared')
+            # Check for incorrectly capitalized keywords
+            elif isinstance(e, Fields) and len(e.fields) == 1 and e.fields[0] in ['True', 'False', 'Null', 'NULL', 'TRUE', 'FALSE']:
+                raise JsonPathParserError(f'Invalid keyword {e.fields[0]}, use lowercase: {e.fields[0].lower()}')
             # Wildcards in comparisons are not allowed
             elif isinstance(e, Fields) and in_comparison and '*' in e.fields:
                 raise JsonPathParserError('Wildcard notation in comparisons is not allowed in filter expressions')
@@ -977,13 +980,23 @@ class Filter(JSONPath):
                 check_expr(e.left, in_comparison)
                 check_expr(e.right, in_comparison)
             elif hasattr(e, 'left') and hasattr(e, 'right'):
-                # For binary operations like comparisons - mark as in_comparison context
-                is_comparison = type(e).__name__ == 'Comparison'
-                check_expr(e.left, is_comparison)
-                check_expr(e.right, is_comparison)
+                # For binary operations - determine context
+                type_name = type(e).__name__
+                if type_name == 'Comparison':
+                    # Comparison operands are in comparison context
+                    check_expr(e.left, True)
+                    check_expr(e.right, True)
+                elif type_name in ['LogicalAnd', 'LogicalOr']:
+                    # Logical operands cannot be bare literals
+                    check_expr(e.left, in_comparison, is_logical_operand=True)
+                    check_expr(e.right, in_comparison, is_logical_operand=True)
+                else:
+                    # Other binary operations
+                    check_expr(e.left, in_comparison)
+                    check_expr(e.right, in_comparison)
             elif hasattr(e, 'expr'):
                 # For unary operations like NOT
-                check_expr(e.expr, in_comparison)
+                check_expr(e.expr, in_comparison, is_logical_operand=True)
             elif hasattr(e, 'expression'):
                 # For Filter expressions
                 check_expr(e.expression, in_comparison)
