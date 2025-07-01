@@ -139,6 +139,10 @@ class JsonPathParser:
         """jsonpath : '[' ID ']'"""
         p[0] = Fields(p[2])
 
+    def p_jsonpath_bracket_string(self, p):
+        """jsonpath : '[' STRING ']'"""
+        p[0] = Fields(p[2])
+
     def p_jsonpath_bracket_index(self, p):
         """jsonpath : '[' NUMBER ']'"""
         p[0] = Index(p[2])
@@ -163,6 +167,10 @@ class JsonPathParser:
 
     def p_jsonpath_child_bracket_field(self, p):
         """jsonpath : jsonpath '[' ID ']'"""
+        p[0] = Child(p[1], Fields(p[3]))
+
+    def p_jsonpath_child_bracket_string(self, p):
+        """jsonpath : jsonpath '[' STRING ']'"""
         p[0] = Child(p[1], Fields(p[3]))
 
     def p_jsonpath_child_bracket_index(self, p):
@@ -197,6 +205,10 @@ class JsonPathParser:
 
     def p_union_element_field(self, p):
         """union_element : ID"""
+        p[0] = Fields(p[1])
+
+    def p_union_element_string(self, p):
+        """union_element : STRING"""
         p[0] = Fields(p[1])
 
     def p_union_element_index(self, p):
@@ -312,12 +324,11 @@ class JsonPathParser:
 
     def p_filter_expr_field(self, p):
         "filter_expr : ID"
-        # Check if this looks like a string literal (quoted)
-        if (p[1].startswith("'") and p[1].endswith("'")) or (p[1].startswith('"') and p[1].endswith('"')):
-            # Remove quotes and create a literal
-            p[0] = Literal(p[1][1:-1])
-        else:
-            p[0] = Fields(p[1])
+        p[0] = Fields(p[1])
+
+    def p_filter_expr_string(self, p):
+        "filter_expr : STRING"
+        p[0] = Literal(p[1])
 
     def p_filter_expr_parens(self, p):
         "filter_expr : '(' filter_expr ')'"

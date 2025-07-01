@@ -56,7 +56,7 @@ class JsonPathLexer:
         'false': 'FALSE',
     }
 
-    tokens = ['DOUBLEDOT', 'NUMBER', 'ID', 'NAMED_OPERATOR', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE', 'AND', 'OR', 'CURRENT'] + list(reserved_words.values())
+    tokens = ['DOUBLEDOT', 'NUMBER', 'ID', 'STRING', 'NAMED_OPERATOR', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE', 'AND', 'OR', 'CURRENT'] + list(reserved_words.values())
 
     states = [ ('singlequote', 'exclusive'),
                ('doublequote', 'exclusive'),
@@ -108,9 +108,7 @@ class JsonPathLexer:
     def t_singlequote_end(self, t):
         r"'"
         t.value = t.lexer.string_value
-        # Check if we're in a filter context by looking for recent '?' token
-        # This is a heuristic - if we're inside a filter, treat as string literal
-        t.type = 'ID'  # Default to ID for backward compatibility
+        t.type = 'STRING'  # Quoted strings are string literals
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t
@@ -138,7 +136,7 @@ class JsonPathLexer:
     def t_doublequote_end(self, t):
         r'"'
         t.value = t.lexer.string_value
-        t.type = 'ID'
+        t.type = 'STRING'  # Quoted strings are string literals
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t

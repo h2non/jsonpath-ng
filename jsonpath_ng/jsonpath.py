@@ -13,6 +13,7 @@ auto_id_field = None
 
 NOT_SET = object()
 LIST_KEY = object()
+UNDEFINED = object()  # Sentinel for undefined/non-existent fields
 
 
 class JSONPath:
@@ -1086,6 +1087,22 @@ class Comparison(JSONPath):
         left_value = self._get_value(self.left, datum)
         right_value = self._get_value(self.right, datum)
         
+        # Handle undefined fields specially for null comparisons
+        if left_value is UNDEFINED:
+            if self.operator == '==' and right_value is None:
+                return False  # undefined != null 
+            elif self.operator == '!=' and right_value is None:
+                return True   # undefined != null is true
+            else:
+                return False  # undefined compared to anything else is false
+        elif right_value is UNDEFINED:
+            if self.operator == '==' and left_value is None:
+                return False  # null != undefined
+            elif self.operator == '!=' and left_value is None:
+                return True   # null != undefined is true
+            else:
+                return False  # anything else compared to undefined is false
+        
         # Handle null comparisons specially per JSONPath spec
         if left_value is None or right_value is None:
             if self.operator == '==':
@@ -1121,23 +1138,12 @@ class Comparison(JSONPath):
         if hasattr(expr, 'evaluate'):
             return expr.evaluate(datum)
         elif hasattr(expr, 'find'):
-            # Special case: if this is a Fields object with a single field
-            # and it doesn't match anything in the datum, treat it as a string literal
-            # This handles quoted strings in filters like $[?@.a=='b']
-            if isinstance(expr, Fields) and len(expr.fields) == 1:
-                matches = expr.find(datum)
-                if not matches:
-                    # No field found, treat as string literal
-                    return expr.fields[0]
-                else:
-                    return matches[0].value
+            matches = expr.find(datum)
+            if matches:
+                return matches[0].value
             else:
-                matches = expr.find(datum)
-                if matches:
-                    return matches[0].value
-                else:
-                    # No matches found, return None to represent "undefined"
-                    return None
+                # No matches found, return UNDEFINED to represent "field doesn't exist"
+                return UNDEFINED
         return expr
     
     def __str__(self):
@@ -1353,22 +1359,11 @@ class FunctionCall(JSONPath):
         if hasattr(expr, 'evaluate'):
             return expr.evaluate(datum)
         elif hasattr(expr, 'find'):
-            # Special case for function arguments: if this is a Fields object with a single field
-            # that doesn't match anything in the datum, treat it as a string literal
-            # This handles cases like match(@.a, 'pattern') where 'pattern' gets parsed as Fields('pattern')
-            if isinstance(expr, Fields) and len(expr.fields) == 1:
-                matches = expr.find(datum)
-                if not matches:
-                    # No field found, likely a string literal in function argument
-                    return expr.fields[0]
-                else:
-                    return matches[0].value
+            matches = expr.find(datum)
+            if matches:
+                return matches[0].value
             else:
-                matches = expr.find(datum)
-                if matches:
-                    return matches[0].value
-                else:
-                    return None
+                return UNDEFINED
         return expr
     
     def __str__(self):
