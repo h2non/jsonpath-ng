@@ -927,6 +927,7 @@ class Filter(JSONPath):
     
     def __init__(self, expression):
         self.expression = expression
+        self._validate_filter_expression(expression)
     
     def find(self, datum):
         datum = DatumInContext.wrap(datum)
@@ -948,6 +949,41 @@ class Filter(JSONPath):
             return result
         else:
             return []
+    
+    def _validate_filter_expression(self, expr):
+        """Validate that filter expression only uses allowed constructs per RFC 9535"""
+        from jsonpath_ng.exceptions import JsonPathParserError
+        
+        # Check for invalid constructs recursively
+        def check_expr(e):
+            if isinstance(e, Slice):
+                raise JsonPathParserError('Slice notation (@[start:end]) is not allowed in filter expressions')
+            elif isinstance(e, Descendants):
+                raise JsonPathParserError('Descendant notation (@..field) is not allowed in filter expressions')
+            elif isinstance(e, Union):
+                raise JsonPathParserError('Union notation (@[a,b]) is not allowed in filter expressions')
+            elif isinstance(e, Fields) and '*' in e.fields:
+                raise JsonPathParserError('Wildcard (@[*] or @.*) is not allowed in filter expressions')
+            elif isinstance(e, Child):
+                # Check both left and right sides of the child expression
+                check_expr(e.left)
+                check_expr(e.right)
+            elif hasattr(e, 'left') and hasattr(e, 'right'):
+                # For binary operations like comparisons and logical operations
+                check_expr(e.left)
+                check_expr(e.right)
+            elif hasattr(e, 'expr'):
+                # For unary operations like NOT
+                check_expr(e.expr)
+            elif hasattr(e, 'expression'):
+                # For Filter expressions
+                check_expr(e.expression)
+            elif hasattr(e, 'arguments'):
+                # For function calls
+                for arg in e.arguments:
+                    check_expr(arg)
+        
+        check_expr(expr)
     
     def _evaluate_expression(self, expr, datum):
         """Evaluate an expression in the context of a datum"""
@@ -1138,7 +1174,8 @@ class LogicalAnd(JSONPath):
             return bool(expr.evaluate(datum))
         elif hasattr(expr, 'find'):
             matches = expr.find(datum)
-            return bool(matches and matches[0].value)
+            # For existence tests, we only check if matches exist, not if their values are truthy
+            return bool(matches)
         return bool(expr)
     
     def __str__(self):
@@ -1179,7 +1216,8 @@ class LogicalOr(JSONPath):
             return bool(expr.evaluate(datum))
         elif hasattr(expr, 'find'):
             matches = expr.find(datum)
-            return bool(matches and matches[0].value)
+            # For existence tests, we only check if matches exist, not if their values are truthy
+            return bool(matches)
         return bool(expr)
     
     def __str__(self):
@@ -1216,7 +1254,8 @@ class LogicalNot(JSONPath):
             return bool(expr.evaluate(datum))
         elif hasattr(expr, 'find'):
             matches = expr.find(datum)
-            return bool(matches and matches[0].value)
+            # For existence tests, we only check if matches exist, not if their values are truthy
+            return bool(matches)
         return bool(expr)
     
     def __str__(self):
