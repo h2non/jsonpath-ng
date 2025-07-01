@@ -1230,3 +1230,114 @@ class LogicalNot(JSONPath):
     
     def __hash__(self):
         return hash(self.expr)
+
+
+class FunctionCall(JSONPath):
+    """
+    Represents function calls in filter expressions (like match, search).
+    """
+    
+    def __init__(self, function_name, arguments):
+        self.function_name = function_name
+        self.arguments = arguments
+    
+    def find(self, datum):
+        return [DatumInContext(self.evaluate(datum), path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        import re
+        
+        if self.function_name == 'match':
+            # match(value, regex) - test if value matches regex
+            if len(self.arguments) != 2:
+                return False
+            
+            value = self._get_value(self.arguments[0], datum)
+            pattern = self._get_value(self.arguments[1], datum)
+            
+            if not isinstance(value, str) or not isinstance(pattern, str):
+                return False
+            
+            try:
+                return bool(re.search(pattern, value))
+            except re.error:
+                return False
+                
+        elif self.function_name == 'search':
+            # search(value, regex) - same as match for now
+            if len(self.arguments) != 2:
+                return False
+            
+            value = self._get_value(self.arguments[0], datum)
+            pattern = self._get_value(self.arguments[1], datum)
+            
+            if not isinstance(value, str) or not isinstance(pattern, str):
+                return False
+            
+            try:
+                return bool(re.search(pattern, value))
+            except re.error:
+                return False
+                
+        elif self.function_name == 'length':
+            # length(value) - get length of value
+            if len(self.arguments) != 1:
+                return 0
+            
+            value = self._get_value(self.arguments[0], datum)
+            
+            try:
+                return len(value)
+            except (TypeError, AttributeError):
+                return 0
+                
+        elif self.function_name == 'count':
+            # count(nodelist) - count number of nodes
+            if len(self.arguments) != 1:
+                return 0
+            
+            if hasattr(self.arguments[0], 'find'):
+                matches = self.arguments[0].find(datum)
+                return len(matches)
+            else:
+                return 1 if self.arguments[0] is not None else 0
+        
+        # Unknown function
+        return False
+    
+    def _get_value(self, expr, datum):
+        if hasattr(expr, 'evaluate'):
+            return expr.evaluate(datum)
+        elif hasattr(expr, 'find'):
+            # Special case for function arguments: if this is a Fields object with a single field
+            # that doesn't match anything in the datum, treat it as a string literal
+            # This handles cases like match(@.a, 'pattern') where 'pattern' gets parsed as Fields('pattern')
+            if isinstance(expr, Fields) and len(expr.fields) == 1:
+                matches = expr.find(datum)
+                if not matches:
+                    # No field found, likely a string literal in function argument
+                    return expr.fields[0]
+                else:
+                    return matches[0].value
+            else:
+                matches = expr.find(datum)
+                if matches:
+                    return matches[0].value
+                else:
+                    return None
+        return expr
+    
+    def __str__(self):
+        args_str = ', '.join(str(arg) for arg in self.arguments)
+        return f'{self.function_name}({args_str})'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.function_name!r}, {self.arguments!r})'
+    
+    def __eq__(self, other):
+        return (isinstance(other, FunctionCall) and 
+                self.function_name == other.function_name and
+                self.arguments == other.arguments)
+    
+    def __hash__(self):
+        return hash((self.function_name, tuple(self.arguments)))

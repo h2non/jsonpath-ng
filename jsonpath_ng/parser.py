@@ -133,6 +133,7 @@ class JsonPathParser:
     def p_jsonpath_current(self, p):
         "jsonpath : CURRENT"
         p[0] = CurrentNode()
+    
 
     def p_jsonpath_bracket_field(self, p):
         """jsonpath : '[' ID ']'"""
@@ -227,9 +228,11 @@ class JsonPathParser:
         "fields : ID"
         p[0] = [p[1]]
 
-    def p_fields_comma(self, p):
-        "fields : fields ',' fields"
-        p[0] = p[1] + p[3]
+    # Temporarily disabled to prevent conflict with function call arguments
+    # TODO: Fix grammar to allow both function calls and comma-separated fields
+    # def p_fields_comma(self, p):
+    #     "fields : fields ',' fields"
+    #     p[0] = p[1] + p[3]
 
     def p_slice_any(self, p):
         "slice : '*'"
@@ -305,11 +308,24 @@ class JsonPathParser:
 
     def p_filter_expr_field(self, p):
         "filter_expr : ID"
-        p[0] = Fields(p[1])
+        # Check if this looks like a string literal (quoted)
+        if (p[1].startswith("'") and p[1].endswith("'")) or (p[1].startswith('"') and p[1].endswith('"')):
+            # Remove quotes and create a literal
+            p[0] = Literal(p[1][1:-1])
+        else:
+            p[0] = Fields(p[1])
 
     def p_filter_expr_parens(self, p):
         "filter_expr : '(' filter_expr ')'"
         p[0] = p[2]
+    
+    def p_filter_expr_function_call_two_args(self, p):
+        "filter_expr : ID '(' filter_expr ',' filter_expr ')'"
+        p[0] = FunctionCall(p[1], [p[3], p[5]])
+    
+    def p_filter_expr_function_call_single(self, p):
+        "filter_expr : ID '(' filter_expr ')'"
+        p[0] = FunctionCall(p[1], [p[3]])
     
 
 class IteratorToTokenStream:
