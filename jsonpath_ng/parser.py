@@ -70,6 +70,7 @@ class JsonPathParser:
         ('left', ','),
         ('left', 'DOUBLEDOT'),
         ('left', '.'),
+        ('left', '[', ']'),  # Higher precedence for brackets
         ('left', '|'),
         ('left', '&'),
         ('left', 'WHERE'),
@@ -109,7 +110,10 @@ class JsonPathParser:
 
     def p_jsonpath_fields(self, p):
         "jsonpath : fields_or_any"
-        p[0] = Fields(*p[1])
+        if isinstance(p[1], str):
+            p[0] = Fields(p[1])
+        else:
+            p[0] = Fields(*p[1])
 
     def p_jsonpath_named_operator(self, p):
         "jsonpath : NAMED_OPERATOR"
@@ -129,35 +133,83 @@ class JsonPathParser:
         "jsonpath : CURRENT"
         p[0] = CurrentNode()
 
-    def p_jsonpath_idx(self, p):
-        "jsonpath : '[' idx ']'"
-        p[0] = Index(*p[2])
+    def p_jsonpath_bracket_field(self, p):
+        """jsonpath : '[' ID ']'"""
+        p[0] = Fields(p[2])
 
-    def p_jsonpath_slice(self, p):
-        "jsonpath : '[' slice ']'"
+    def p_jsonpath_bracket_index(self, p):
+        """jsonpath : '[' NUMBER ']'"""
+        p[0] = Index(p[2])
+
+    def p_jsonpath_bracket_wildcard(self, p):
+        """jsonpath : '[' '*' ']'"""
+        p[0] = Fields('*')
+
+    def p_jsonpath_bracket_slice(self, p):
+        """jsonpath : '[' slice ']'"""
         p[0] = p[2]
 
-    def p_jsonpath_fieldbrackets(self, p):
-        "jsonpath : '[' fields ']'"
-        p[0] = Fields(*p[2])
+    def p_jsonpath_bracket_union(self, p):
+        """jsonpath : '[' union_list ']'"""
+        if len(p[2]) == 1:
+            p[0] = p[2][0]
+        else:
+            result = p[2][0]
+            for element in p[2][1:]:
+                result = Union(result, element)
+            p[0] = result
 
-    def p_jsonpath_child_fieldbrackets(self, p):
-        "jsonpath : jsonpath '[' fields ']'"
-        p[0] = Child(p[1], Fields(*p[3]))
+    def p_jsonpath_child_bracket_field(self, p):
+        """jsonpath : jsonpath '[' ID ']'"""
+        p[0] = Child(p[1], Fields(p[3]))
 
-    def p_jsonpath_child_idxbrackets(self, p):
-        "jsonpath : jsonpath '[' idx ']'"
-        p[0] = Child(p[1], Index(*p[3]))
+    def p_jsonpath_child_bracket_index(self, p):
+        """jsonpath : jsonpath '[' NUMBER ']'"""
+        p[0] = Child(p[1], Index(p[3]))
 
-    def p_jsonpath_child_slicebrackets(self, p):
-        "jsonpath : jsonpath '[' slice ']'"
+    def p_jsonpath_child_bracket_wildcard(self, p):
+        """jsonpath : jsonpath '[' '*' ']'"""
+        p[0] = Child(p[1], Fields('*'))
+
+    def p_jsonpath_child_bracket_slice(self, p):
+        """jsonpath : jsonpath '[' slice ']'"""
         p[0] = Child(p[1], p[3])
+
+    def p_jsonpath_child_bracket_union(self, p):
+        """jsonpath : jsonpath '[' union_list ']'"""
+        if len(p[3]) == 1:
+            p[0] = Child(p[1], p[3][0])
+        else:
+            result = p[3][0]
+            for element in p[3][1:]:
+                result = Union(result, element)
+            p[0] = Child(p[1], result)
+
+    def p_union_list_start(self, p):
+        """union_list : union_element ',' union_element"""
+        p[0] = [p[1], p[3]]
+
+    def p_union_list_extend(self, p):
+        """union_list : union_list ',' union_element"""
+        p[0] = p[1] + [p[3]]
+
+    def p_union_element_field(self, p):
+        """union_element : ID"""
+        p[0] = Fields(p[1])
+
+    def p_union_element_index(self, p):
+        """union_element : NUMBER"""
+        p[0] = Index(p[1])
+
+    def p_union_element_wildcard(self, p):
+        """union_element : '*'"""
+        p[0] = Fields('*')
 
     def p_jsonpath_parens(self, p):
         "jsonpath : '(' jsonpath ')'"
         p[0] = p[2]
 
-    # Because fields in brackets cannot be '*' - that is reserved for array indices
+    # Legacy field parsing for dot notation
     def p_fields_or_any(self, p):
         """fields_or_any : fields
                          | '*'
@@ -175,14 +227,6 @@ class JsonPathParser:
 
     def p_fields_comma(self, p):
         "fields : fields ',' fields"
-        p[0] = p[1] + p[3]
-
-    def p_idx(self, p):
-        "idx : NUMBER"
-        p[0] = [p[1]]
-
-    def p_idx_comma(self, p):
-        "idx : idx ',' idx "
         p[0] = p[1] + p[3]
 
     def p_slice_any(self, p):

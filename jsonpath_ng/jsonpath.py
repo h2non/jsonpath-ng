@@ -547,6 +547,12 @@ class Union(JSONPath):
     def find(self, data):
         return self.left.find(data) + self.right.find(data)
 
+    def __str__(self):
+        return f'({self.left}|{self.right})'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.left!r}, {self.right!r})'
+
     def __eq__(self, other):
         return isinstance(other, Union) and self.left == other.left and self.right == other.right
 
@@ -774,7 +780,10 @@ class Index(JSONPath):
         return isinstance(other, Index) and sorted(self.indices) == sorted(other.indices)
 
     def __str__(self):
-        return '[%i]' % self.indices
+        if len(self.indices) == 1:
+            return '[%i]' % self.indices[0]
+        else:
+            return '[%s]' % ','.join(str(i) for i in self.indices)
 
     def __repr__(self):
         return '%s(indices=%r)' % (self.__class__.__name__, self.indices)
@@ -786,7 +795,7 @@ class Index(JSONPath):
             value += [{} for __ in range(pad)]
 
     def __hash__(self):
-        return hash(self.index)
+        return hash(tuple(sorted(self.indices)))
 
 
 class Slice(JSONPath):
