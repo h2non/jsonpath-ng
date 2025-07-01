@@ -87,9 +87,8 @@ class JsonPathLexer:
         # JSON-compliant number format: no leading zeros (except for 0), no trailing decimal point
         r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?'
         
-        # Check for negative zero which is invalid per JSONPath RFC
-        if t.value == '-0':
-            raise JsonPathLexerError('Negative zero (-0) is not allowed in JSONPath expressions')
+        # Store original string to check for -0
+        original_str = t.value
         
         try:
             # Try to parse as integer first, then float
@@ -97,9 +96,14 @@ class JsonPathLexer:
                 t.value = float(t.value)
             else:
                 t.value = int(t.value)
+                
+            # Store original string as an attribute for negative zero detection
+            t.original_str = original_str
+                
         except ValueError:
             # If parsing fails, treat as 0
             t.value = 0
+            t.original_str = original_str
         return t
 
 
@@ -122,7 +126,13 @@ class JsonPathLexer:
 
     def t_singlequote_escape(self, t):
         r'\\.'
-        t.lexer.string_value += t.value[1]
+        escaped_char = t.value[1]
+        # Only certain characters can be escaped in single-quoted JSONPath strings
+        valid_escapes = '\'\\'  # Only ' and \ can be escaped in single quotes
+        if escaped_char in valid_escapes:
+            t.lexer.string_value += escaped_char
+        else:
+            raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 
     def t_singlequote_end(self, t):
         r"'"
@@ -154,7 +164,13 @@ class JsonPathLexer:
 
     def t_doublequote_escape(self, t):
         r'\\.'
-        t.lexer.string_value += t.value[1]
+        escaped_char = t.value[1]
+        # Only certain characters can be escaped in double-quoted JSONPath strings
+        valid_escapes = '"\\'  # Only " and \ can be escaped in double quotes
+        if escaped_char in valid_escapes:
+            t.lexer.string_value += escaped_char
+        else:
+            raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 
     def t_doublequote_end(self, t):
         r'"'

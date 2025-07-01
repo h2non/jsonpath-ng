@@ -154,6 +154,10 @@ class JsonPathParser:
         index = p[2]
         if not isinstance(index, int):
             raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for negative zero which is invalid as an array index
+        # PLY gives us the token object as p.slice[2], check if it has original_str
+        if hasattr(p.slice[2], 'original_str') and p.slice[2].original_str == '-0':
+            raise JsonPathParserError('Negative zero (-0) is not allowed as an array index')
         # Check for indices beyond safe integer range (2^53 - 1)
         if abs(index) > 9007199254740991:
             raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
@@ -191,6 +195,9 @@ class JsonPathParser:
         index = p[3]
         if not isinstance(index, int):
             raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for negative zero which is invalid as an array index
+        if hasattr(p.slice[3], 'original_str') and p.slice[3].original_str == '-0':
+            raise JsonPathParserError('Negative zero (-0) is not allowed as an array index')
         # Check for indices beyond safe integer range (2^53 - 1)
         if abs(index) > 9007199254740991:
             raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
@@ -236,6 +243,9 @@ class JsonPathParser:
         index = p[1]
         if not isinstance(index, int):
             raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for negative zero which is invalid as an array index
+        if hasattr(p.slice[1], 'original_str') and p.slice[1].original_str == '-0':
+            raise JsonPathParserError('Negative zero (-0) is not allowed as an array index')
         # Check for indices beyond safe integer range (2^53 - 1)
         if abs(index) > 9007199254740991:
             raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
