@@ -127,10 +127,24 @@ class JsonPathLexer:
     def t_singlequote_escape(self, t):
         r'\\.'
         escaped_char = t.value[1]
-        # Only certain characters can be escaped in single-quoted JSONPath strings
-        valid_escapes = '\'\\'  # Only ' and \ can be escaped in single quotes
-        if escaped_char in valid_escapes:
-            t.lexer.string_value += escaped_char
+        # JSON-compliant escape sequences for single-quoted strings
+        escape_map = {
+            "'": "'",
+            '\\': '\\',
+            '/': '/',
+            'b': '\b',
+            'f': '\f',
+            'n': '\n',
+            'r': '\r',
+            't': '\t'
+        }
+        
+        if escaped_char in escape_map:
+            t.lexer.string_value += escape_map[escaped_char]
+        elif escaped_char == 'u':
+            # Unicode escape sequences need special handling
+            # For now, reject them as they require 4 hex digits
+            raise JsonPathLexerError('Unicode escape sequences (\\uXXXX) are not supported in this implementation')
         else:
             raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 
@@ -165,10 +179,24 @@ class JsonPathLexer:
     def t_doublequote_escape(self, t):
         r'\\.'
         escaped_char = t.value[1]
-        # Only certain characters can be escaped in double-quoted JSONPath strings
-        valid_escapes = '"\\'  # Only " and \ can be escaped in double quotes
-        if escaped_char in valid_escapes:
-            t.lexer.string_value += escaped_char
+        # JSON-compliant escape sequences for double-quoted strings
+        escape_map = {
+            '"': '"',
+            '\\': '\\',
+            '/': '/',
+            'b': '\b',
+            'f': '\f',
+            'n': '\n',
+            'r': '\r',
+            't': '\t'
+        }
+        
+        if escaped_char in escape_map:
+            t.lexer.string_value += escape_map[escaped_char]
+        elif escaped_char == 'u':
+            # Unicode escape sequences need special handling
+            # For now, reject them as they require 4 hex digits
+            raise JsonPathLexerError('Unicode escape sequences (\\uXXXX) are not supported in this implementation')
         else:
             raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 
