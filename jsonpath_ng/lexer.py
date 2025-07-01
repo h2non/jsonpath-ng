@@ -84,7 +84,8 @@ class JsonPathLexer:
         return t
 
     def t_NUMBER(self, t):
-        r'-?(?:\d+\.?\d*|\d*\.\d+)(?:[eE][+-]?\d+)?'
+        # JSON-compliant number format: no leading zeros (except for 0), no trailing decimal point
+        r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?'
         try:
             # Try to parse as integer first, then float
             if '.' in t.value or 'e' in t.value.lower():
