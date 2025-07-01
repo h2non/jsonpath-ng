@@ -597,25 +597,55 @@ class Fields(JSONPath):
     def get_field_datum(datum, field, create):
         if field == auto_id_field:
             return AutoIdForDatum(datum)
-        try:
-            field_value = datum.value.get(field, NOT_SET)
-            if field_value is NOT_SET:
-                if create:
-                    datum.value[field] = field_value = {}
+        
+        # Handle dictionary/object access
+        if hasattr(datum.value, 'get'):
+            try:
+                field_value = datum.value.get(field, NOT_SET)
+                if field_value is NOT_SET:
+                    if create:
+                        datum.value[field] = field_value = {}
+                    else:
+                        return None
+                return DatumInContext(field_value, path=Fields(field), context=datum)
+            except (TypeError, AttributeError):
+                pass
+        
+        # Handle array/list access with numeric indices
+        if hasattr(datum.value, '__getitem__') and hasattr(datum.value, '__len__'):
+            try:
+                index = int(field)
+                if 0 <= index < len(datum.value):
+                    field_value = datum.value[index]
+                    return DatumInContext(field_value, path=Index(index), context=datum)
+                elif create:
+                    # Extend the list if needed
+                    while len(datum.value) <= index:
+                        datum.value.append({})
+                    return DatumInContext(datum.value[index], path=Index(index), context=datum)
                 else:
                     return None
-            return DatumInContext(field_value, path=Fields(field), context=datum)
-        except (TypeError, AttributeError):
-            return None
+            except (ValueError, TypeError, IndexError):
+                pass
+        
+        return None
 
     def reified_fields(self, datum):
         if '*' not in self.fields:
             return self.fields
         else:
             try:
+                # Try object keys first
                 fields = tuple(datum.value.keys())
                 return fields if auto_id_field is None else fields + (auto_id_field,)
             except AttributeError:
+                # For arrays/lists, use indices as field names
+                if hasattr(datum.value, '__len__') and hasattr(datum.value, '__getitem__'):
+                    try:
+                        fields = tuple(str(i) for i in range(len(datum.value)))
+                        return fields if auto_id_field is None else fields + (auto_id_field,)
+                    except (TypeError, ValueError):
+                        pass
                 return ()
 
     def find(self, datum):
