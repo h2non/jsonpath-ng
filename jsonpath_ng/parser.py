@@ -54,6 +54,10 @@ class JsonPathParser:
                                     errorlog = logger)
 
     def parse(self, string, lexer = None) -> JSONPath:
+        # Validate no leading or trailing whitespace per RFC 9535
+        if string != string.strip():
+            raise JsonPathParserError('JSONPath expressions must not have leading or trailing whitespace')
+        
         lexer = lexer or self.lexer_class()
         return self.parse_token_stream(lexer.tokenize(string))
 
@@ -70,6 +74,9 @@ class JsonPathParser:
         ('left', '&'),
         ('left', 'WHERE'),
         ('left', 'WHERENOT'),
+        ('left', 'OR'),
+        ('left', 'AND'),
+        ('left', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE'),
     ]
 
     def p_error(self, t):
@@ -191,6 +198,52 @@ class JsonPathParser:
     def p_empty(self, p):
         'empty :'
         p[0] = None
+
+    # Filter expression rules
+    def p_jsonpath_filter(self, p):
+        "jsonpath : '[' '?' filter_expr ']'"
+        p[0] = Filter(p[3])
+
+    def p_jsonpath_child_filter(self, p):
+        "jsonpath : jsonpath '[' '?' filter_expr ']'"
+        p[0] = Child(p[1], Filter(p[4]))
+
+    def p_filter_expr_comparison(self, p):
+        """filter_expr : filter_expr EQ filter_expr
+                       | filter_expr NE filter_expr
+                       | filter_expr LT filter_expr
+                       | filter_expr LE filter_expr
+                       | filter_expr GT filter_expr
+                       | filter_expr GE filter_expr"""
+        p[0] = Comparison(p[1], p[2], p[3])
+
+    def p_filter_expr_logical(self, p):
+        """filter_expr : filter_expr AND filter_expr
+                       | filter_expr OR filter_expr"""
+        if p[2] == '&&':
+            p[0] = LogicalAnd(p[1], p[3])
+        else:
+            p[0] = LogicalOr(p[1], p[3])
+
+    def p_filter_expr_current(self, p):
+        "filter_expr : CURRENT"
+        p[0] = CurrentNode()
+
+    def p_filter_expr_path(self, p):
+        "filter_expr : jsonpath"
+        p[0] = p[1]
+
+    def p_filter_expr_literal_number(self, p):
+        "filter_expr : NUMBER"
+        p[0] = Literal(p[1])
+
+    def p_filter_expr_literal_string(self, p):
+        "filter_expr : ID"
+        p[0] = Literal(p[1])
+
+    def p_filter_expr_parens(self, p):
+        "filter_expr : '(' filter_expr ')'"
+        p[0] = p[2]
 
 class IteratorToTokenStream:
     def __init__(self, iterator):
