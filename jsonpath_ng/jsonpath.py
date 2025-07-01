@@ -853,6 +853,10 @@ class Slice(JSONPath):
         if not (hasattr(datum.value, '__getitem__') and hasattr(datum.value, '__len__') and not isinstance(datum.value, (str, dict))):
             return []
 
+        # Handle step 0 specially - it should return empty result per compliance tests
+        if self.step == 0:
+            return []
+        
         # Some iterators do not support slicing but we can still
         # at least work for '*'
         if self.start is None and self.end is None and self.step is None:
@@ -965,6 +969,10 @@ class Filter(JSONPath):
             # Bare literals are not allowed at root level or as operands to logical operations
             if (is_root or is_logical_operand) and isinstance(e, Literal):
                 raise JsonPathParserError('Bare literal values are not allowed in filter expressions, literals must be compared')
+            # Bare function calls must be compared (except in logical contexts where they're evaluated for truthiness)
+            elif (is_root or is_logical_operand) and isinstance(e, FunctionCall):
+                if e.function_name in ['count', 'length']:
+                    raise JsonPathParserError(f'Function {e.function_name}() result must be compared, bare function calls are not allowed')
             # Check for incorrectly capitalized keywords
             elif isinstance(e, Fields) and len(e.fields) == 1 and e.fields[0] in ['True', 'False', 'Null', 'NULL', 'TRUE', 'FALSE']:
                 raise JsonPathParserError(f'Invalid keyword {e.fields[0]}, use lowercase: {e.fields[0].lower()}')

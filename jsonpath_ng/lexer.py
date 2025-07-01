@@ -124,10 +124,50 @@ class JsonPathLexer:
                 raise JsonPathLexerError(f'Control character U+{ord(char):04X} is not allowed in string literals')
         t.lexer.string_value += t.value
 
+    # Unicode escapes need to be first to have higher precedence than regular escapes
+    def t_singlequote_unicode(self, t):
+        r'\\u[0-9a-fA-F]{4}'
+        hex_digits = t.value[2:6]
+        try:
+            code_point = int(hex_digits, 16)
+            
+            # Handle UTF-16 surrogate pairs - we need to look ahead for potential pairs
+            if 0xD800 <= code_point <= 0xDBFF:  # High surrogate
+                # Look ahead for potential low surrogate
+                remaining_input = t.lexer.lexdata[t.lexer.lexpos:]
+                import re
+                low_surrogate_match = re.match(r'\\u[0-9a-fA-F]{4}', remaining_input)
+                if low_surrogate_match:
+                    low_hex = low_surrogate_match.group()[2:]
+                    low_code_point = int(low_hex, 16)
+                    if 0xDC00 <= low_code_point <= 0xDFFF:  # Valid low surrogate
+                        # Combine high and low surrogate
+                        combined_code_point = 0x10000 + ((code_point - 0xD800) << 10) + (low_code_point - 0xDC00)
+                        unicode_char = chr(combined_code_point)
+                        # Advance the lexer position past the low surrogate
+                        t.lexer.lexpos += len(low_surrogate_match.group())
+                    else:
+                        # High surrogate followed by invalid low surrogate
+                        raise JsonPathLexerError(f'Invalid surrogate sequence: high surrogate U+{code_point:04X} followed by non-low-surrogate U+{low_code_point:04X}')
+                else:
+                    # High surrogate not followed by unicode escape - invalid
+                    raise JsonPathLexerError(f'Invalid surrogate sequence: unpaired high surrogate U+{code_point:04X}')
+            elif 0xDC00 <= code_point <= 0xDFFF:  # Low surrogate without high surrogate
+                raise JsonPathLexerError(f'Invalid surrogate sequence: unpaired low surrogate U+{code_point:04X}')
+            else:
+                # Regular BMP character
+                unicode_char = chr(code_point)
+            
+            # Check if it's a control character that should be rejected
+            if ord(unicode_char) <= 0x1F:
+                raise JsonPathLexerError(f'Control character U+{ord(unicode_char):04X} is not allowed in string literals')
+            t.lexer.string_value += unicode_char
+        except ValueError:
+            raise JsonPathLexerError(f'Invalid unicode escape sequence {t.value}')
+
     def t_singlequote_escape(self, t):
         r'\\.'
         escaped_char = t.value[1]
-        # JSON-compliant escape sequences for single-quoted strings
         escape_map = {
             "'": "'",
             '\\': '\\',
@@ -141,10 +181,6 @@ class JsonPathLexer:
         
         if escaped_char in escape_map:
             t.lexer.string_value += escape_map[escaped_char]
-        elif escaped_char == 'u':
-            # Unicode escape sequences need special handling
-            # For now, reject them as they require 4 hex digits
-            raise JsonPathLexerError('Unicode escape sequences (\\uXXXX) are not supported in this implementation')
         else:
             raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 
@@ -176,10 +212,50 @@ class JsonPathLexer:
                 raise JsonPathLexerError(f'Control character U+{ord(char):04X} is not allowed in string literals')
         t.lexer.string_value += t.value
 
+    # Unicode escapes need to be first to have higher precedence than regular escapes
+    def t_doublequote_unicode(self, t):
+        r'\\u[0-9a-fA-F]{4}'
+        hex_digits = t.value[2:6]
+        try:
+            code_point = int(hex_digits, 16)
+            
+            # Handle UTF-16 surrogate pairs - we need to look ahead for potential pairs
+            if 0xD800 <= code_point <= 0xDBFF:  # High surrogate
+                # Look ahead for potential low surrogate
+                remaining_input = t.lexer.lexdata[t.lexer.lexpos:]
+                import re
+                low_surrogate_match = re.match(r'\\u[0-9a-fA-F]{4}', remaining_input)
+                if low_surrogate_match:
+                    low_hex = low_surrogate_match.group()[2:]
+                    low_code_point = int(low_hex, 16)
+                    if 0xDC00 <= low_code_point <= 0xDFFF:  # Valid low surrogate
+                        # Combine high and low surrogate
+                        combined_code_point = 0x10000 + ((code_point - 0xD800) << 10) + (low_code_point - 0xDC00)
+                        unicode_char = chr(combined_code_point)
+                        # Advance the lexer position past the low surrogate
+                        t.lexer.lexpos += len(low_surrogate_match.group())
+                    else:
+                        # High surrogate followed by invalid low surrogate
+                        raise JsonPathLexerError(f'Invalid surrogate sequence: high surrogate U+{code_point:04X} followed by non-low-surrogate U+{low_code_point:04X}')
+                else:
+                    # High surrogate not followed by unicode escape - invalid
+                    raise JsonPathLexerError(f'Invalid surrogate sequence: unpaired high surrogate U+{code_point:04X}')
+            elif 0xDC00 <= code_point <= 0xDFFF:  # Low surrogate without high surrogate
+                raise JsonPathLexerError(f'Invalid surrogate sequence: unpaired low surrogate U+{code_point:04X}')
+            else:
+                # Regular BMP character
+                unicode_char = chr(code_point)
+            
+            # Check if it's a control character that should be rejected
+            if ord(unicode_char) <= 0x1F:
+                raise JsonPathLexerError(f'Control character U+{ord(unicode_char):04X} is not allowed in string literals')
+            t.lexer.string_value += unicode_char
+        except ValueError:
+            raise JsonPathLexerError(f'Invalid unicode escape sequence {t.value}')
+
     def t_doublequote_escape(self, t):
         r'\\.'
         escaped_char = t.value[1]
-        # JSON-compliant escape sequences for double-quoted strings
         escape_map = {
             '"': '"',
             '\\': '\\',
@@ -193,10 +269,6 @@ class JsonPathLexer:
         
         if escaped_char in escape_map:
             t.lexer.string_value += escape_map[escaped_char]
-        elif escaped_char == 'u':
-            # Unicode escape sequences need special handling
-            # For now, reject them as they require 4 hex digits
-            raise JsonPathLexerError('Unicode escape sequences (\\uXXXX) are not supported in this implementation')
         else:
             raise JsonPathLexerError(f'Invalid escape sequence \\{escaped_char} in string literal')
 

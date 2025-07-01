@@ -294,9 +294,8 @@ class JsonPathParser:
         """slice : maybe_int ':' maybe_int
                  | maybe_int ':' maybe_int ':' maybe_int """
         args = p[1::2]
-        # Validate step is not zero
-        if len(args) == 3 and args[2] == 0:
-            raise JsonPathParserError('Slice step cannot be zero')
+        # Note: Per compliance tests, step 0 is allowed and should return empty result
+        # This is handled in the Slice.find() method
         p[0] = Slice(*args)
 
     def p_maybe_int(self, p):
@@ -380,13 +379,46 @@ class JsonPathParser:
         "filter_expr : '(' filter_expr ')'"
         p[0] = p[2]
     
-    def p_filter_expr_function_call_two_args(self, p):
-        "filter_expr : ID '(' filter_expr ',' filter_expr ')'"
-        p[0] = FunctionCall(p[1], [p[3], p[5]])
+    def p_filter_expr_function_call_no_args(self, p):
+        "filter_expr : ID '(' ')'"
+        # Validate function calls with no arguments
+        function_name = p[1]
+        if function_name in ['count', 'length', 'match', 'search', 'value']:
+            raise JsonPathParserError(f'Function {function_name} requires at least one argument')
+        p[0] = FunctionCall(function_name, [])
     
     def p_filter_expr_function_call_single(self, p):
         "filter_expr : ID '(' filter_expr ')'"
-        p[0] = FunctionCall(p[1], [p[3]])
+        function_name = p[1]
+        arg = p[3]
+        
+        # Validate function arguments per JSONPath RFC 9535
+        if function_name == 'count':
+            # count() argument must be a query expression, not a literal
+            if isinstance(arg, Literal):
+                raise JsonPathParserError('count() function argument must be a query expression, not a literal value')
+        elif function_name == 'length':
+            # length() argument must be a singular query expression 
+            if isinstance(arg, Literal):
+                raise JsonPathParserError('length() function argument must be a query expression, not a literal value')
+            # Check for non-singular queries like @.* 
+            if hasattr(arg, 'fields') and '*' in getattr(arg, 'fields', []):
+                raise JsonPathParserError('length() function argument must be a singular query expression')
+        elif function_name in ['match', 'search']:
+            # match/search need exactly 2 arguments
+            raise JsonPathParserError(f'{function_name}() function requires exactly 2 arguments')
+        
+        p[0] = FunctionCall(function_name, [arg])
+    
+    def p_filter_expr_function_call_two_args(self, p):
+        "filter_expr : ID '(' filter_expr ',' filter_expr ')'"
+        function_name = p[1]
+        
+        # Validate argument counts
+        if function_name in ['count', 'length', 'value']:
+            raise JsonPathParserError(f'{function_name}() function takes exactly 1 argument, got 2')
+        
+        p[0] = FunctionCall(function_name, [p[3], p[5]])
     
 
 class IteratorToTokenStream:
