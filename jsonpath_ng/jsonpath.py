@@ -1138,7 +1138,10 @@ class Comparison(JSONPath):
             return False
     
     def _get_value(self, expr, datum):
-        if hasattr(expr, 'evaluate'):
+        # Special case: CurrentNode should return the actual value, not existence boolean
+        if isinstance(expr, CurrentNode):
+            return datum.value if hasattr(datum, 'value') else datum
+        elif hasattr(expr, 'evaluate'):
             return expr.evaluate(datum)
         elif hasattr(expr, 'find'):
             matches = expr.find(datum)
@@ -1383,7 +1386,10 @@ class FunctionCall(JSONPath):
         return False
     
     def _get_value(self, expr, datum):
-        if hasattr(expr, 'evaluate'):
+        # Special case: CurrentNode should return the actual value, not existence boolean
+        if isinstance(expr, CurrentNode):
+            return datum.value if hasattr(datum, 'value') else datum
+        elif hasattr(expr, 'evaluate'):
             return expr.evaluate(datum)
         elif hasattr(expr, 'find'):
             matches = expr.find(datum)
