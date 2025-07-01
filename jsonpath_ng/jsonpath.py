@@ -843,10 +843,10 @@ class Slice(JSONPath):
         # Used for catching null value instead of empty list in path
         if not datum.value:
             return []
-        # Here's the hack. If it is a dictionary or some kind of constant,
-        # put it in a single-element list
-        if (isinstance(datum.value, dict) or isinstance(datum.value, int) or isinstance(datum.value, str)):
-            return self.find(DatumInContext([datum.value], path=datum.path, context=datum.context))
+        
+        # Only apply slice operations to arrays/lists, not to other types
+        if not (hasattr(datum.value, '__getitem__') and hasattr(datum.value, '__len__') and not isinstance(datum.value, (str, dict))):
+            return []
 
         # Some iterators do not support slicing but we can still
         # at least work for '*'
