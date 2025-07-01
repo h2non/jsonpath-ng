@@ -743,10 +743,11 @@ class Index(JSONPath):
         rv = []
         for index in self.indices:
             # invalid indices do not crash, return [] instead
-            # Only apply index operations to sequences (lists, tuples, strings)
+            # Only apply index operations to sequences (lists, tuples), not dicts or strings
             if (datum.value and 
                 hasattr(datum.value, '__len__') and 
                 hasattr(datum.value, '__getitem__') and 
+                not isinstance(datum.value, (str, dict)) and
                 len(datum.value) > index):
                 rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
@@ -1066,9 +1067,20 @@ class Comparison(JSONPath):
         if hasattr(expr, 'evaluate'):
             return expr.evaluate(datum)
         elif hasattr(expr, 'find'):
-            matches = expr.find(datum)
-            if matches:
-                return matches[0].value
+            # Special case: if this is a Fields object with a single field
+            # and it doesn't match anything in the datum, treat it as a string literal
+            # This handles quoted strings in filters like $[?@.a=='b']
+            if isinstance(expr, Fields) and len(expr.fields) == 1:
+                matches = expr.find(datum)
+                if not matches:
+                    # No field found, treat as string literal
+                    return expr.fields[0]
+                else:
+                    return matches[0].value
+            else:
+                matches = expr.find(datum)
+                if matches:
+                    return matches[0].value
         return expr
     
     def __str__(self):

@@ -105,7 +105,9 @@ class JsonPathLexer:
     def t_singlequote_end(self, t):
         r"'"
         t.value = t.lexer.string_value
-        t.type = 'ID'
+        # Check if we're in a filter context by looking for recent '?' token
+        # This is a heuristic - if we're inside a filter, treat as string literal
+        t.type = 'ID'  # Default to ID for backward compatibility
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t

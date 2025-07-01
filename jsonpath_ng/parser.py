@@ -286,9 +286,9 @@ class JsonPathParser:
         "filter_expr : NUMBER"
         p[0] = Literal(p[1])
 
-    def p_filter_expr_literal_string(self, p):
+    def p_filter_expr_field(self, p):
         "filter_expr : ID"
-        p[0] = Literal(p[1])
+        p[0] = Fields(p[1])
 
     def p_filter_expr_parens(self, p):
         "filter_expr : '(' filter_expr ')'"
