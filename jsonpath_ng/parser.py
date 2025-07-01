@@ -58,6 +58,21 @@ class JsonPathParser:
         if string != string.strip():
             raise JsonPathParserError('JSONPath expressions must not have leading or trailing whitespace')
         
+        # Check for specific invalid whitespace patterns per JSONPath RFC 9535
+        import re
+        
+        # Function name followed by whitespace and then parenthesis is invalid
+        if re.search(r'\b[a-zA-Z_][a-zA-Z0-9_]*\s+\(', string):
+            raise JsonPathParserError('Whitespace between function name and parenthesis is not allowed')
+        
+        # Dot followed by whitespace and then identifier is invalid  
+        if re.search(r'\.\s+[a-zA-Z_]', string):
+            raise JsonPathParserError('Whitespace between dot and field name is not allowed')
+        
+        # Double dot followed by whitespace and then identifier is invalid
+        if re.search(r'\.\.\s+[a-zA-Z_]', string):
+            raise JsonPathParserError('Whitespace between recursive descent and field name is not allowed')
+        
         lexer = lexer or self.lexer_class()
         return self.parse_token_stream(lexer.tokenize(string))
 
