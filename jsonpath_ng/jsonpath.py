@@ -748,9 +748,14 @@ class Index(JSONPath):
             if (datum.value and 
                 hasattr(datum.value, '__len__') and 
                 hasattr(datum.value, '__getitem__') and 
-                not isinstance(datum.value, (str, dict)) and
-                len(datum.value) > index):
-                rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
+                not isinstance(datum.value, (str, dict))):
+                try:
+                    # Use Python's indexing which handles negative indices
+                    if -len(datum.value) <= index < len(datum.value):
+                        rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
+                except (IndexError, TypeError):
+                    # Index out of bounds, skip
+                    pass
         return rv
 
     def update(self, data, val):

@@ -145,6 +145,13 @@ class JsonPathParser:
 
     def p_jsonpath_bracket_index(self, p):
         """jsonpath : '[' NUMBER ']'"""
+        # Validate index constraints per JSONPath RFC
+        index = p[2]
+        if not isinstance(index, int):
+            raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for indices beyond safe integer range (2^53 - 1)
+        if abs(index) > 9007199254740991:
+            raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
         p[0] = Index(p[2])
 
     def p_jsonpath_bracket_wildcard(self, p):
@@ -175,6 +182,13 @@ class JsonPathParser:
 
     def p_jsonpath_child_bracket_index(self, p):
         """jsonpath : jsonpath '[' NUMBER ']'"""
+        # Validate index constraints per JSONPath RFC
+        index = p[3]
+        if not isinstance(index, int):
+            raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for indices beyond safe integer range (2^53 - 1)
+        if abs(index) > 9007199254740991:
+            raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
         p[0] = Child(p[1], Index(p[3]))
 
     def p_jsonpath_child_bracket_wildcard(self, p):
@@ -213,6 +227,13 @@ class JsonPathParser:
 
     def p_union_element_index(self, p):
         """union_element : NUMBER"""
+        # Validate index constraints per JSONPath RFC
+        index = p[1]
+        if not isinstance(index, int):
+            raise JsonPathParserError(f'Array indices must be integers, not {type(index).__name__}: {index}')
+        # Check for indices beyond safe integer range (2^53 - 1)
+        if abs(index) > 9007199254740991:
+            raise JsonPathParserError(f'Array index {index} exceeds maximum safe integer range')
         p[0] = Index(p[1])
 
     def p_union_element_wildcard(self, p):
