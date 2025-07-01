@@ -73,7 +73,7 @@ class JsonPathLexer:
     t_AND = r'&&'
     t_OR = r'\|\|'
     t_CURRENT = r'@'
-    t_ignore = ' \\t\\r\\n'  # Back to ignoring whitespace globally for now
+    t_ignore = ' \t\r\n'  # Back to ignoring whitespace globally for now
 
     def t_ID(self, t):
         # Support broad Unicode range for identifiers per JSONPath RFC 9535
@@ -86,6 +86,11 @@ class JsonPathLexer:
     def t_NUMBER(self, t):
         # JSON-compliant number format: no leading zeros (except for 0), no trailing decimal point
         r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?'
+        
+        # Check for negative zero which is invalid per JSONPath RFC
+        if t.value == '-0':
+            raise JsonPathLexerError('Negative zero (-0) is not allowed in JSONPath expressions')
+        
         try:
             # Try to parse as integer first, then float
             if '.' in t.value or 'e' in t.value.lower():
