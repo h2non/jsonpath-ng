@@ -617,8 +617,10 @@ class Fields(JSONPath):
             except (TypeError, AttributeError):
                 pass
         
-        # Handle array/list access with numeric indices
-        if hasattr(datum.value, '__getitem__') and hasattr(datum.value, '__len__'):
+        # Handle array/list access with numeric indices (but not strings)
+        if (hasattr(datum.value, '__getitem__') and 
+            hasattr(datum.value, '__len__') and
+            not isinstance(datum.value, str)):
             try:
                 index = int(field)
                 if 0 <= index < len(datum.value):
@@ -645,8 +647,10 @@ class Fields(JSONPath):
                 fields = tuple(datum.value.keys())
                 return fields if auto_id_field is None else fields + (auto_id_field,)
             except AttributeError:
-                # For arrays/lists, use indices as field names
-                if hasattr(datum.value, '__len__') and hasattr(datum.value, '__getitem__'):
+                # For arrays/lists (but not strings), use indices as field names
+                if (hasattr(datum.value, '__len__') and 
+                    hasattr(datum.value, '__getitem__') and
+                    not isinstance(datum.value, str)):
                     try:
                         fields = tuple(str(i) for i in range(len(datum.value)))
                         return fields if auto_id_field is None else fields + (auto_id_field,)
@@ -739,7 +743,11 @@ class Index(JSONPath):
         rv = []
         for index in self.indices:
             # invalid indices do not crash, return [] instead
-            if datum.value and len(datum.value) > index:
+            # Only apply index operations to sequences (lists, tuples, strings)
+            if (datum.value and 
+                hasattr(datum.value, '__len__') and 
+                hasattr(datum.value, '__getitem__') and 
+                len(datum.value) > index):
                 rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
 
