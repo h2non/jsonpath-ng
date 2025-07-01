@@ -869,3 +869,254 @@ def _clean_list_keys(struct_):
             for key, value in struct_.items():
                 struct_[key] = _clean_list_keys(value)
     return struct_
+
+
+class Filter(JSONPath):
+    """
+    JSONPath filter expression [?expression].
+    Filters array elements or object values based on a boolean expression.
+    """
+    
+    def __init__(self, expression):
+        self.expression = expression
+    
+    def find(self, datum):
+        datum = DatumInContext.wrap(datum)
+        
+        # Filter works on arrays and objects
+        if isinstance(datum.value, list):
+            result = []
+            for i, item in enumerate(datum.value):
+                item_datum = DatumInContext(item, path=Index(i), context=datum)
+                if self._evaluate_expression(self.expression, item_datum):
+                    result.append(item_datum)
+            return result
+        elif isinstance(datum.value, dict):
+            result = []
+            for key, value in datum.value.items():
+                item_datum = DatumInContext(value, path=Fields(key), context=datum)
+                if self._evaluate_expression(self.expression, item_datum):
+                    result.append(item_datum)
+            return result
+        else:
+            return []
+    
+    def _evaluate_expression(self, expr, datum):
+        """Evaluate an expression in the context of a datum"""
+        if hasattr(expr, 'evaluate'):
+            return bool(expr.evaluate(datum))
+        elif hasattr(expr, 'find'):
+            # For regular JSONPath expressions, check if they match anything
+            matches = expr.find(datum)
+            return len(matches) > 0
+        else:
+            return bool(expr)
+    
+    def __str__(self):
+        return f'[?{self.expression}]'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.expression!r})'
+    
+    def __eq__(self, other):
+        return isinstance(other, Filter) and self.expression == other.expression
+    
+    def __hash__(self):
+        return hash(self.expression)
+
+
+class CurrentNode(JSONPath):
+    """
+    Represents the current node (@) in filter expressions.
+    """
+    
+    def find(self, datum):
+        return [DatumInContext.wrap(datum)]
+    
+    def evaluate(self, datum):
+        # For existence tests, we check if the node exists, not if its value is truthy
+        # The node exists if we can reach it, regardless of value
+        return True
+    
+    def __str__(self):
+        return '@'
+    
+    def __repr__(self):
+        return 'CurrentNode()'
+    
+    def __eq__(self, other):
+        return isinstance(other, CurrentNode)
+    
+    def __hash__(self):
+        return hash('current_node')
+
+
+class Literal(JSONPath):
+    """
+    Represents a literal value in filter expressions.
+    """
+    
+    def __init__(self, value):
+        self.value = value
+    
+    def find(self, datum):
+        return [DatumInContext(self.value, path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        return self.value
+    
+    def __str__(self):
+        if isinstance(self.value, str):
+            return f"'{self.value}'"
+        return str(self.value)
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.value!r})'
+    
+    def __eq__(self, other):
+        return isinstance(other, Literal) and self.value == other.value
+    
+    def __hash__(self):
+        return hash(self.value)
+
+
+class Comparison(JSONPath):
+    """
+    Represents a comparison operation in filter expressions.
+    """
+    
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.operator = operator
+        self.right = right
+    
+    def find(self, datum):
+        return [DatumInContext(self.evaluate(datum), path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        left_value = self._get_value(self.left, datum)
+        right_value = self._get_value(self.right, datum)
+        
+        try:
+            if self.operator == '==':
+                return left_value == right_value
+            elif self.operator == '!=':
+                return left_value != right_value
+            elif self.operator == '<':
+                return left_value < right_value
+            elif self.operator == '<=':
+                return left_value <= right_value
+            elif self.operator == '>':
+                return left_value > right_value
+            elif self.operator == '>=':
+                return left_value >= right_value
+            else:
+                return False
+        except (TypeError, ValueError):
+            return False
+    
+    def _get_value(self, expr, datum):
+        if hasattr(expr, 'evaluate'):
+            return expr.evaluate(datum)
+        elif hasattr(expr, 'find'):
+            matches = expr.find(datum)
+            if matches:
+                return matches[0].value
+        return expr
+    
+    def __str__(self):
+        return f'{self.left} {self.operator} {self.right}'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.left!r}, {self.operator!r}, {self.right!r})'
+    
+    def __eq__(self, other):
+        return (isinstance(other, Comparison) and 
+                self.left == other.left and 
+                self.operator == other.operator and 
+                self.right == other.right)
+    
+    def __hash__(self):
+        return hash((self.left, self.operator, self.right))
+
+
+class LogicalAnd(JSONPath):
+    """
+    Represents logical AND operation in filter expressions.
+    """
+    
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+    
+    def find(self, datum):
+        return [DatumInContext(self.evaluate(datum), path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        left_result = self._get_boolean(self.left, datum)
+        if not left_result:
+            return False
+        return self._get_boolean(self.right, datum)
+    
+    def _get_boolean(self, expr, datum):
+        if hasattr(expr, 'evaluate'):
+            return bool(expr.evaluate(datum))
+        elif hasattr(expr, 'find'):
+            matches = expr.find(datum)
+            return bool(matches and matches[0].value)
+        return bool(expr)
+    
+    def __str__(self):
+        return f'{self.left} && {self.right}'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.left!r}, {self.right!r})'
+    
+    def __eq__(self, other):
+        return (isinstance(other, LogicalAnd) and 
+                self.left == other.left and 
+                self.right == other.right)
+    
+    def __hash__(self):
+        return hash((self.left, self.right))
+
+
+class LogicalOr(JSONPath):
+    """
+    Represents logical OR operation in filter expressions.
+    """
+    
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+    
+    def find(self, datum):
+        return [DatumInContext(self.evaluate(datum), path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        left_result = self._get_boolean(self.left, datum)
+        if left_result:
+            return True
+        return self._get_boolean(self.right, datum)
+    
+    def _get_boolean(self, expr, datum):
+        if hasattr(expr, 'evaluate'):
+            return bool(expr.evaluate(datum))
+        elif hasattr(expr, 'find'):
+            matches = expr.find(datum)
+            return bool(matches and matches[0].value)
+        return bool(expr)
+    
+    def __str__(self):
+        return f'{self.left} || {self.right}'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.left!r}, {self.right!r})'
+    
+    def __eq__(self, other):
+        return (isinstance(other, LogicalOr) and 
+                self.left == other.left and 
+                self.right == other.right)
+    
+    def __hash__(self):
+        return hash((self.left, self.right))

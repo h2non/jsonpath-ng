@@ -125,6 +125,10 @@ class JsonPathParser:
         "jsonpath : '$'"
         p[0] = Root()
 
+    def p_jsonpath_current(self, p):
+        "jsonpath : CURRENT"
+        p[0] = CurrentNode()
+
     def p_jsonpath_idx(self, p):
         "jsonpath : '[' idx ']'"
         p[0] = Index(*p[2])

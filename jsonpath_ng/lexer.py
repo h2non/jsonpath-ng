@@ -46,14 +46,14 @@ class JsonPathLexer:
     #
     # Anyhow, it is pythonic to give some rope to hang oneself with :-)
 
-    literals = ['*', '.', '[', ']', '(', ')', '$', ',', ':', '|', '&', '~']
+    literals = ['*', '.', '[', ']', '(', ')', '$', ',', ':', '|', '&', '~', '?']
 
     reserved_words = {
         'where': 'WHERE',
         'wherenot': 'WHERENOT',
     }
 
-    tokens = ['DOUBLEDOT', 'NUMBER', 'ID', 'NAMED_OPERATOR'] + list(reserved_words.values())
+    tokens = ['DOUBLEDOT', 'NUMBER', 'ID', 'NAMED_OPERATOR', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE', 'AND', 'OR', 'CURRENT'] + list(reserved_words.values())
 
     states = [ ('singlequote', 'exclusive'),
                ('doublequote', 'exclusive'),
@@ -61,12 +61,21 @@ class JsonPathLexer:
 
     # Normal lexing, rather easy
     t_DOUBLEDOT = r'\.\.'
-    t_ignore = ' \t'
+    t_EQ = r'=='
+    t_NE = r'!='
+    t_LE = r'<='
+    t_GE = r'>='
+    t_LT = r'<'
+    t_GT = r'>'
+    t_AND = r'&&'
+    t_OR = r'\|\|'
+    t_CURRENT = r'@'
+    t_ignore = ' \t\r\n'
 
     def t_ID(self, t):
         # CJK: [\u4E00-\u9FA5]
         # EMOJI: [\U0001F600-\U0001F64F]
-        r'([a-zA-Z_@]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])([a-zA-Z0-9_@\-]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])*'
+        r'([a-zA-Z_]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])([a-zA-Z0-9_\-]|[\u4E00-\u9FA5]|[\U0001F600-\U0001F64F])*'
         t.type = self.reserved_words.get(t.value, 'ID')
         return t
 
