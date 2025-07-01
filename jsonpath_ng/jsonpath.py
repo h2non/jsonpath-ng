@@ -600,8 +600,8 @@ class Fields(JSONPath):
     def __init__(self, *fields):
         self.fields = fields
 
-    @staticmethod
-    def get_field_datum(datum, field, create):
+    @staticmethod  
+    def get_field_datum(datum, field, create, is_wildcard_expansion=False):
         if field == auto_id_field:
             return AutoIdForDatum(datum)
         
@@ -618,23 +618,27 @@ class Fields(JSONPath):
             except (TypeError, AttributeError):
                 pass
         
-        # Handle array/list access with numeric indices (but not strings)
+        # Handle array/list access for numeric string fields
+        # Per JSONPath RFC 9535, explicit field access like @['0'] should only work on objects
+        # But wildcard expansion like @.* should work on arrays by generating numeric field names
         if (hasattr(datum.value, '__getitem__') and 
             hasattr(datum.value, '__len__') and
             not isinstance(datum.value, str)):
             try:
                 index = int(field)
-                if 0 <= index < len(datum.value):
+                # Only allow array access for numeric fields if it's from wildcard expansion
+                # or if the field is actually numeric (not a quoted string)
+                if is_wildcard_expansion and 0 <= index < len(datum.value):
                     field_value = datum.value[index]
                     return DatumInContext(field_value, path=Index(index), context=datum)
-                elif create:
+                elif create and is_wildcard_expansion:
                     # Extend the list if needed
                     while len(datum.value) <= index:
                         datum.value.append({})
                     return DatumInContext(datum.value[index], path=Index(index), context=datum)
-                else:
-                    return None
+                # For explicit field access like @['0'], don't convert to array index
             except (ValueError, TypeError, IndexError):
+                # If the field is not a valid integer, don't try array access
                 pass
         
         return None
@@ -667,7 +671,9 @@ class Fields(JSONPath):
 
     def _find_base(self, datum, create):
         datum = DatumInContext.wrap(datum)
-        field_data = [self.get_field_datum(datum, field, create)
+        # Check if this Fields instance contains a wildcard
+        has_wildcard = '*' in self.fields
+        field_data = [self.get_field_datum(datum, field, create, is_wildcard_expansion=has_wildcard)
                       for field in self.reified_fields(datum)]
         return [fd for fd in field_data if fd is not None]
 
