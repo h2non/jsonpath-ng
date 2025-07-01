@@ -956,9 +956,12 @@ class Filter(JSONPath):
         from jsonpath_ng.exceptions import JsonPathParserError
         
         # Check for invalid constructs recursively
-        def check_expr(e, in_comparison=False):
+        def check_expr(e, in_comparison=False, is_root=False):
+            # Bare literals at root level are not allowed (must be in comparisons)
+            if is_root and isinstance(e, Literal):
+                raise JsonPathParserError('Bare literal values are not allowed in filter expressions, literals must be compared')
             # Wildcards in comparisons are not allowed
-            if isinstance(e, Fields) and in_comparison and '*' in e.fields:
+            elif isinstance(e, Fields) and in_comparison and '*' in e.fields:
                 raise JsonPathParserError('Wildcard notation in comparisons is not allowed in filter expressions')
             # Slices are more restrictive
             elif isinstance(e, Slice) and in_comparison:
@@ -989,7 +992,7 @@ class Filter(JSONPath):
                 for arg in e.arguments:
                     check_expr(arg, False)  # Function arguments are not in comparison context
         
-        check_expr(expr)
+        check_expr(expr, is_root=True)
     
     def _evaluate_expression(self, expr, datum):
         """Evaluate an expression in the context of a datum"""
