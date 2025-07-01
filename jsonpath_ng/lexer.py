@@ -73,7 +73,7 @@ class JsonPathLexer:
     t_AND = r'&&'
     t_OR = r'\|\|'
     t_CURRENT = r'@'
-    t_ignore = ' \t\r\n'
+    t_ignore = ' \\t\\r\\n'  # Back to ignoring whitespace globally for now
 
     def t_ID(self, t):
         # Support broad Unicode range for identifiers per JSONPath RFC 9535
@@ -98,6 +98,7 @@ class JsonPathLexer:
         return t
 
 
+
     # Single-quoted strings
     t_singlequote_ignore = ''
     def t_singlequote(self, t):
@@ -108,6 +109,10 @@ class JsonPathLexer:
 
     def t_singlequote_content(self, t):
         r"[^'\\]+"
+        # Check for control characters (U+0000 to U+001F)
+        for char in t.value:
+            if ord(char) <= 0x1F:
+                raise JsonPathLexerError(f'Control character U+{ord(char):04X} is not allowed in string literals')
         t.lexer.string_value += t.value
 
     def t_singlequote_escape(self, t):
@@ -136,6 +141,10 @@ class JsonPathLexer:
 
     def t_doublequote_content(self, t):
         r'[^"\\]+'
+        # Check for control characters (U+0000 to U+001F)
+        for char in t.value:
+            if ord(char) <= 0x1F:
+                raise JsonPathLexerError(f'Control character U+{ord(char):04X} is not allowed in string literals')
         t.lexer.string_value += t.value
 
     def t_doublequote_escape(self, t):

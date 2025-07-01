@@ -133,6 +133,11 @@ class JsonPathParser:
     def p_jsonpath_current(self, p):
         "jsonpath : CURRENT"
         p[0] = CurrentNode()
+
+
+    def p_empty(self, p):
+        'empty :'
+        pass
     
 
     def p_jsonpath_bracket_field(self, p):
@@ -285,9 +290,6 @@ class JsonPathParser:
                      | empty"""
         p[0] = p[1]
 
-    def p_empty(self, p):
-        'empty :'
-        p[0] = None
 
     # Filter expression rules
     def p_jsonpath_filter(self, p):
