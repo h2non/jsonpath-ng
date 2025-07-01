@@ -78,6 +78,7 @@ class JsonPathParser:
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE'),
+        ('right', '!'),  # Right associative for unary NOT
     ]
 
     def p_error(self, t):
@@ -274,6 +275,10 @@ class JsonPathParser:
         else:
             p[0] = LogicalOr(p[1], p[3])
 
+    def p_filter_expr_not(self, p):
+        """filter_expr : '!' filter_expr"""
+        p[0] = LogicalNot(p[2])
+
     def p_filter_expr_current(self, p):
         "filter_expr : CURRENT"
         p[0] = CurrentNode()
@@ -285,6 +290,18 @@ class JsonPathParser:
     def p_filter_expr_literal_number(self, p):
         "filter_expr : NUMBER"
         p[0] = Literal(p[1])
+
+    def p_filter_expr_literal_null(self, p):
+        "filter_expr : NULL"
+        p[0] = Literal(None)
+
+    def p_filter_expr_literal_true(self, p):
+        "filter_expr : TRUE"
+        p[0] = Literal(True)
+
+    def p_filter_expr_literal_false(self, p):
+        "filter_expr : FALSE"
+        p[0] = Literal(False)
 
     def p_filter_expr_field(self, p):
         "filter_expr : ID"

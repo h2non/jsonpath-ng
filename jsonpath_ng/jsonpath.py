@@ -1045,6 +1045,19 @@ class Comparison(JSONPath):
         left_value = self._get_value(self.left, datum)
         right_value = self._get_value(self.right, datum)
         
+        # Handle null comparisons specially per JSONPath spec
+        if left_value is None or right_value is None:
+            if self.operator == '==':
+                return left_value == right_value
+            elif self.operator == '!=':
+                return left_value != right_value
+            elif self.operator in ['<', '<=', '>', '>=']:
+                # null comparisons: null is only equal to null
+                if left_value is None and right_value is None:
+                    return self.operator in ['<=', '>=']  # null <= null and null >= null are true
+                else:
+                    return False  # null compared to non-null is always false
+        
         try:
             if self.operator == '==':
                 return left_value == right_value
@@ -1081,6 +1094,9 @@ class Comparison(JSONPath):
                 matches = expr.find(datum)
                 if matches:
                     return matches[0].value
+                else:
+                    # No matches found, return None to represent "undefined"
+                    return None
         return expr
     
     def __str__(self):
@@ -1179,3 +1195,38 @@ class LogicalOr(JSONPath):
     
     def __hash__(self):
         return hash((self.left, self.right))
+
+
+class LogicalNot(JSONPath):
+    """
+    Represents logical NOT operation in filter expressions.
+    """
+    
+    def __init__(self, expr):
+        self.expr = expr
+    
+    def find(self, datum):
+        return [DatumInContext(self.evaluate(datum), path=Root(), context=None)]
+    
+    def evaluate(self, datum):
+        return not self._get_boolean(self.expr, datum)
+    
+    def _get_boolean(self, expr, datum):
+        if hasattr(expr, 'evaluate'):
+            return bool(expr.evaluate(datum))
+        elif hasattr(expr, 'find'):
+            matches = expr.find(datum)
+            return bool(matches and matches[0].value)
+        return bool(expr)
+    
+    def __str__(self):
+        return f'!{self.expr}'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.expr!r})'
+    
+    def __eq__(self, other):
+        return isinstance(other, LogicalNot) and self.expr == other.expr
+    
+    def __hash__(self):
+        return hash(self.expr)
