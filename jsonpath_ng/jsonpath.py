@@ -1350,7 +1350,7 @@ class FunctionCall(JSONPath):
             USE_REGEX_MODULE = False
         
         if self.function_name == 'match':
-            # match(value, regex) - test if value matches regex
+            # match(value, regex) - test if ENTIRE value matches regex (anchored match)
             if len(self.arguments) != 2:
                 return False
             
@@ -1361,15 +1361,16 @@ class FunctionCall(JSONPath):
                 return False
             
             try:
+                # For match(), we need to match the entire string, so use fullmatch() or anchor the pattern
                 if USE_REGEX_MODULE:
-                    return bool(regex.search(pattern, value))
+                    return bool(regex.fullmatch(pattern, value))
                 else:
-                    return bool(re.search(pattern, value))
+                    return bool(re.fullmatch(pattern, value))
             except Exception:
                 return False
                 
         elif self.function_name == 'search':
-            # search(value, regex) - same as match for now
+            # search(value, regex) - find pattern anywhere in the string (not anchored)
             if len(self.arguments) != 2:
                 return False
             
