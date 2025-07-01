@@ -985,9 +985,9 @@ class Filter(JSONPath):
                 # For Filter expressions
                 check_expr(e.expression, in_comparison)
             elif hasattr(e, 'arguments'):
-                # For function calls
+                # For function calls - arguments can contain any JSONPath expressions
                 for arg in e.arguments:
-                    check_expr(arg, in_comparison)
+                    check_expr(arg, False)  # Function arguments are not in comparison context
         
         check_expr(expr)
     
@@ -1087,8 +1087,11 @@ class Comparison(JSONPath):
         left_value = self._get_value(self.left, datum)
         right_value = self._get_value(self.right, datum)
         
-        # Handle undefined fields specially for null comparisons
-        if left_value is UNDEFINED:
+        # Handle undefined fields specially
+        if left_value is UNDEFINED and right_value is UNDEFINED:
+            # UNDEFINED == UNDEFINED is true, UNDEFINED != UNDEFINED is false
+            return self.operator == '=='
+        elif left_value is UNDEFINED:
             if self.operator == '==' and right_value is None:
                 return False  # undefined != null 
             elif self.operator == '!=' and right_value is None:
@@ -1332,14 +1335,18 @@ class FunctionCall(JSONPath):
         elif self.function_name == 'length':
             # length(value) - get length of value
             if len(self.arguments) != 1:
-                return 0
+                return UNDEFINED
             
             value = self._get_value(self.arguments[0], datum)
+            
+            # If value is undefined or null, length is also undefined
+            if value is UNDEFINED or value is None:
+                return UNDEFINED
             
             try:
                 return len(value)
             except (TypeError, AttributeError):
-                return 0
+                return UNDEFINED
                 
         elif self.function_name == 'count':
             # count(nodelist) - count number of nodes
@@ -1351,6 +1358,26 @@ class FunctionCall(JSONPath):
                 return len(matches)
             else:
                 return 1 if self.arguments[0] is not None else 0
+                
+        elif self.function_name == 'value':
+            # value(nodelist) - return single value from nodelist, undefined if not exactly one
+            if len(self.arguments) != 1:
+                return UNDEFINED
+            
+            if hasattr(self.arguments[0], 'find'):
+                # For value() function, we need to find matches in the root document context
+                # not the current filter context. We need to trace back to the root.
+                root_datum = datum
+                while root_datum.context is not None:
+                    root_datum = root_datum.context
+                
+                matches = self.arguments[0].find(root_datum)
+                if len(matches) == 1:
+                    return matches[0].value
+                else:
+                    return UNDEFINED  # zero or multiple matches
+            else:
+                return self.arguments[0]
         
         # Unknown function
         return False
