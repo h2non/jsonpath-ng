@@ -971,7 +971,7 @@ class Filter(JSONPath):
                 raise JsonPathParserError('Bare literal values are not allowed in filter expressions, literals must be compared')
             # Bare function calls must be compared (except in logical contexts where they're evaluated for truthiness)
             elif (is_root or is_logical_operand) and isinstance(e, FunctionCall):
-                if e.function_name in ['count', 'length']:
+                if e.function_name in ['count', 'length', 'value']:
                     raise JsonPathParserError(f'Function {e.function_name}() result must be compared, bare function calls are not allowed')
             # Check for incorrectly capitalized keywords
             elif isinstance(e, Fields) and len(e.fields) == 1 and e.fields[0] in ['True', 'False', 'Null', 'NULL', 'TRUE', 'FALSE']:
@@ -1337,6 +1337,11 @@ class FunctionCall(JSONPath):
     
     def evaluate(self, datum):
         import re
+        try:
+            import regex
+            USE_REGEX_MODULE = True
+        except ImportError:
+            USE_REGEX_MODULE = False
         
         if self.function_name == 'match':
             # match(value, regex) - test if value matches regex
@@ -1350,8 +1355,11 @@ class FunctionCall(JSONPath):
                 return False
             
             try:
-                return bool(re.search(pattern, value))
-            except re.error:
+                if USE_REGEX_MODULE:
+                    return bool(regex.search(pattern, value))
+                else:
+                    return bool(re.search(pattern, value))
+            except Exception:
                 return False
                 
         elif self.function_name == 'search':
@@ -1366,8 +1374,11 @@ class FunctionCall(JSONPath):
                 return False
             
             try:
-                return bool(re.search(pattern, value))
-            except re.error:
+                if USE_REGEX_MODULE:
+                    return bool(regex.search(pattern, value))
+                else:
+                    return bool(re.search(pattern, value))
+            except Exception:
                 return False
                 
         elif self.function_name == 'length':
