@@ -188,6 +188,26 @@ def test_update(parse: Callable[[str], JSONPath], expression: str, data, update_
     assert data_copy2 == expected_value
 
 
+filter_test_cases = (
+    # Docs examples
+    ("foo[*].baz", {'foo': [{'baz': 1}, {'baz': 2}]}, lambda d: True, {'foo': [{}, {}]}),
+    ("foo[*].baz", {'foo': [{'baz': 1}, {'baz': 2}]}, lambda d: d == 2, {'foo': [{'baz': 1}, {}]}),
+    # Wildcard issue fix
+    ("*.baz", {"flag": False, "foo": {"bar": 1, "baz": 2}}, lambda d: True, {"flag": False, "foo": {"bar": 1}}),
+)
+
+
+@pytest.mark.parametrize(
+    "expression, data, filter_function, expected_value",
+    filter_test_cases,
+)
+@parsers
+def test_filter(parse: Callable[[str], JSONPath], expression: str, data, filter_function: Callable, expected_value):
+    data_copy = copy.deepcopy(data)
+    parse(expression).filter(filter_function, data_copy)
+    assert data_copy == expected_value
+
+
 find_test_cases = (
     #
     # * (star)

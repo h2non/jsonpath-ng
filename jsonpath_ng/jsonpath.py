@@ -649,7 +649,7 @@ class Fields(JSONPath):
         return data
 
     def filter(self, fn, data):
-        if data is not None:
+        if data is not None and isinstance(data, dict):
             for field in self.reified_fields(DatumInContext.wrap(data)):
                 if field in data:
                     if fn(data[field]):
