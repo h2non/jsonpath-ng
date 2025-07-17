@@ -796,7 +796,7 @@ class Slice(JSONPath):
             return []
         # Here's the hack. If it is a dictionary or some kind of constant,
         # put it in a single-element list
-        if (isinstance(datum.value, dict) or isinstance(datum.value, int) or isinstance(datum.value, str)):
+        if (isinstance(datum.value, dict) or isinstance(datum.value, (int, float, str, bool))):
             return self.find(DatumInContext([datum.value], path=datum.path, context=datum.context))
 
         # Some iterators do not support slicing but we can still
