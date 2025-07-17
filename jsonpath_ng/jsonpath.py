@@ -792,7 +792,7 @@ class Slice(JSONPath):
         datum = DatumInContext.wrap(datum)
 
         # Used for catching null value instead of empty list in path
-        if not datum.value:
+        if datum.value is None:
             return []
         # Here's the hack. If it is a dictionary or some kind of constant,
         # put it in a single-element list
