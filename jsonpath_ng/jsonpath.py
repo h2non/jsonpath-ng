@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Optional
 import logging
 from itertools import *  # noqa
-from jsonpath_ng.lexer import JsonPathLexer
+import re
 
 # Get logger name
 logger = logging.getLogger(__name__)
@@ -312,7 +312,16 @@ class Child(JSONPath):
         return isinstance(other, Child) and self.left == other.left and self.right == other.right
 
     def __str__(self):
-        return '%s.%s' % (self.left, self.right)
+        # Special case: If the right side is a `SortedThis` instance,
+        # do not inject a period between the left and right sides.
+        # Adding a period would corrupt the syntax and prevent re-parsing.
+        # Current module design creates circular imports, so imports happen here.
+        from .ext.iterable import SortedThis
+        if isinstance(self.right, SortedThis):
+            return f"{self.left}{self.right}"
+
+        # Parentheses are required to ensure precedence.
+        return f"({self.left}.{self.right})"
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.left, self.right)
@@ -515,7 +524,7 @@ class Descendants(JSONPath):
         return data
 
     def __str__(self):
-        return '%s..%s' % (self.left, self.right)
+        return f"({self.left}..{self.right})"
 
     def __eq__(self, other):
         return isinstance(other, Descendants) and self.left == other.left and self.right == other.right
@@ -553,6 +562,12 @@ class Union(JSONPath):
     def __hash__(self):
         return hash((self.left, self.right))
 
+    def __repr__(self) -> str:
+        return f"Union({self.left} | {self.right})"
+
+    def __str__(self) -> str:
+        return f"{self.left} | {self.right}"
+
 class Intersect(JSONPath):
     """
     JSONPath for bits that match *both* patterns.
@@ -579,6 +594,12 @@ class Intersect(JSONPath):
 
     def __hash__(self):
         return hash((self.left, self.right))
+
+    def __repr__(self) -> str:
+        return f"Intersect({self.left} & {self.right})"
+
+    def __str__(self) -> str:
+        return f"{self.left} & {self.right}"
 
 
 class Fields(JSONPath):
@@ -657,13 +678,15 @@ class Fields(JSONPath):
         return data
 
     def __str__(self):
-        # If any JsonPathLexer.literals are included in field name need quotes
-        # This avoids unnecessary quotes to keep strings short.
-        # Test each field whether it contains a literal and only then add quotes
-        # The test loops over all literals, could possibly optimize to short circuit if one found
-        fields_as_str = ("'" + str(f) + "'" if any([l in f for l in JsonPathLexer.literals]) else
-                         str(f) for f in self.fields)
-        return ','.join(fields_as_str)
+        # Enclose fields in quotes as needed.
+        # This is a conservative check, and is biased toward quoting fields.
+        rendered_fields: list[str] = []
+        for field in self.fields:
+            if re.match(r"^[A-Za-z_@][A-Za-z0-9_@-]*$", field):
+                rendered_fields.append(field)
+            else:
+                rendered_fields.append(f"{field!r}")
+        return ','.join(rendered_fields)
 
 
     def __repr__(self):

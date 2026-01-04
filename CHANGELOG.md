@@ -5,6 +5,8 @@
 - Typing for IDE autocomplete
 - Support for EMOJI and CJK Unicode
 - Support for `DatumInContext` in-place updating
+- Support equality checking of `Operation` instances
+- Support string serialization of `Union` and `Intersect` instances
 
 ## Changed
 - Rename `ExtentedJsonPathParser`
@@ -13,7 +15,19 @@
 - Fix `False` and `None` values
 - Fix single constant case
 - Update field filter to resolve wildcard path issue
-- Vendor copy of ply and remove pickly support from the vendored copy to resolve [CVE-2025-56005](https://nvd.nist.gov/vuln/detail/CVE-2025-56005) 
+- Vendor copy of ply and remove pickle support from the vendored copy to resolve [CVE-2025-56005](https://nvd.nist.gov/vuln/detail/CVE-2025-56005)
+- Fix string serialization throughout the library to enforce roundtrip parsing consistency.
+  - Fields are more conservatively enclosed in quotion marks
+    This fixes serialization and re-parsing of `"00"`, `'%'`, `'0@'` and `"&'"`.
+  - `Operation` instances can now be serialized.
+    This fixes serialization of `0-@` and `A -A`.
+  - `SortedThis` instances can now be serialized and re-parsed.
+    This fixes serialization of `0[/0]`.
+  - `Child` precedence is now preserved using parentheses during serialization.
+    This ensures that serialized strings like `a..b[c]` serialize and re-parse identically.
+- Fix parsing and string serialization of numeric-only identifiers.
+  This fixes parsing of `10`, which was parsed as two separate fields.
+- Fix equality checks for `SortedThis` instances.
 
 ## Removed
 - Python 3.8 and 3.9 no longer supported

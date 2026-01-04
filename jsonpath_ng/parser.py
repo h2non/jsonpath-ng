@@ -154,7 +154,7 @@ class JsonPathParser:
         if p[1] == '*':
             p[0] = ['*']
         elif isinstance(p[1], int):
-            p[0] = str(p[1])
+            p[0] = [str(p[1])]
         else:
             p[0] = p[1]
 
