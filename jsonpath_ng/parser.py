@@ -2,7 +2,7 @@ import logging
 import sys
 import os.path
 
-import ply.yacc
+import jsonpath_ng._ply.yacc
 
 from jsonpath_ng.exceptions import JsonPathParserError
 from jsonpath_ng.jsonpath import *
@@ -45,7 +45,7 @@ class JsonPathParser:
         parsing_table_module = '_'.join([module_name, start_symbol, 'parsetab'])
 
         # Generate the parse table
-        self.parser = ply.yacc.yacc(module=self,
+        self.parser = jsonpath_ng._ply.yacc.yacc(module=self,
                                     debug=self.debug,
                                     tabmodule = parsing_table_module,
                                     outputdir = output_directory,

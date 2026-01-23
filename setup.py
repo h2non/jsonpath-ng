@@ -22,9 +22,6 @@ setuptools.setup(
         ],
     },
     test_suite='tests',
-    install_requires=[
-        'ply'
-    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
