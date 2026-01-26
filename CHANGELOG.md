@@ -13,6 +13,7 @@
 - Fix `False` and `None` values
 - Fix single constant case
 - Update field filter to resolve wildcard path issue
+- Vendor copy of ply and remove pickly support from the vendored copy to resolve [CVE-2025-56005](https://nvd.nist.gov/vuln/detail/CVE-2025-56005) 
 
 ## Removed
 - Python 3.8 and 3.9 no longer supported
