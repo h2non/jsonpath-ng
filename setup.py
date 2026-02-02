@@ -15,7 +15,7 @@ setuptools.setup(
     url='https://github.com/h2non/jsonpath-ng',
     license='Apache 2.0',
     long_description=io.open('README.rst', encoding='utf-8').read(),
-    packages=['jsonpath_ng', 'jsonpath_ng.bin', 'jsonpath_ng.ext'],
+    packages=['jsonpath_ng', 'jsonpath_ng.bin', 'jsonpath_ng.ext','jsonpath_ng._ply'],
     entry_points={
         'console_scripts': [
             'jsonpath_ng=jsonpath_ng.bin.jsonpath:entry_point'
