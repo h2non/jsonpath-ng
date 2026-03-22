@@ -288,7 +288,7 @@ find_test_cases = (
     #
     ("`this`", {"foo": "baz"}, [{"foo": "baz"}], ["`this`"]),
     ("foo.`this`", {"foo": "baz"}, ["baz"], ["foo"]),
-    ("foo.`this`.baz", {"foo": {"baz": 3}}, [3], ["(foo.baz)"]),
+    ("foo.`this`.baz", {"foo": {"baz": 3}}, [3], ["foo.baz"]),
     #
     # Indexes
     # -------
@@ -299,7 +299,7 @@ find_test_cases = (
     ("[0]", None, [], []),
     # Indexing a dict matches nothing rather than raising KeyError (issue #93)
     ("[0]", {"foo": 1}, [], []),
-    ("$.*[0].b", {"a": [{"b": 1}], "c": {"d": 2}}, [1], ["((a.[0]).b)"]),
+    ("$.*[0].b", {"a": [{"b": 1}], "c": {"d": 2}}, [1], ["a.[0].b"]),
     #
     # Slices
     # ------
@@ -325,14 +325,14 @@ find_test_cases = (
     ("[*]", None, [], []),
     ("[0:]", 1, [1], ["[0]"]),
     ("[*]", {"foo": 1}, [{"foo": 1}], ["[0]"]),
-    ("[*].foo", {"foo": 1}, [1], ["([0].foo)"]),
+    ("[*].foo", {"foo": 1}, [1], ["[0].foo"]),
     #
     # Children
     # --------
     #
-    ("foo.baz", {"foo": {"baz": 3}}, [3], ["(foo.baz)"]),
-    ("foo.baz", {"foo": {"baz": [3]}}, [[3]], ["(foo.baz)"]),
-    ("foo.baz.qux", {"foo": {"baz": {"qux": 5}}}, [5], ["((foo.baz).qux)"]),
+    ("foo.baz", {"foo": {"baz": 3}}, [3], ["foo.baz"]),
+    ("foo.baz", {"foo": {"baz": [3]}}, [[3]], ["foo.baz"]),
+    ("foo.baz.qux", {"foo": {"baz": {"qux": 5}}}, [5], ["foo.baz.qux"]),
     #
     # Descendants
     # -----------
@@ -341,13 +341,13 @@ find_test_cases = (
         "foo..baz",
         {"foo": {"baz": 1, "bing": {"baz": 2}}},
         [1, 2],
-        ["(foo.baz)", "((foo.bing).baz)"],
+        ["foo.baz", "foo.bing.baz"],
     ),
     (
         "foo..baz",
         {"foo": [{"baz": 1}, {"baz": 2}]},
         [1, 2],
-        ["((foo.[0]).baz)", "((foo.[1]).baz)"],
+        ["foo.[0].baz", "foo.[1].baz"],
     ),
     #
     # Parents
@@ -358,24 +358,24 @@ find_test_cases = (
         "foo.`parent`.foo.baz.`parent`.baz.qux",
         {"foo": {"baz": {"qux": 5}}},
         [5],
-        ["((foo.baz).qux)"],
+        ["foo.baz.qux"],
     ),
     #
     # Hyphens
     # -------
     #
-    ("foo.bar-baz", {"foo": {"bar-baz": 3}}, [3], ["(foo.bar-baz)"]),
+    ("foo.bar-baz", {"foo": {"bar-baz": 3}}, [3], ["foo.bar-baz"]),
     (
         "foo.[bar-baz,blah-blah]",
         {"foo": {"bar-baz": 3, "blah-blah": 5}},
         [3, 5],
-        ["(foo.bar-baz)", "(foo.blah-blah)"],
+        ["foo.bar-baz", "foo.blah-blah"],
     ),
     #
     # Literals
     # --------
     #
-    ("A.'a.c'", {"A": {"a.c": "d"}}, ["d"], ["(A.'a.c')"]),
+    ("A.'a.c'", {"A": {"a.c": "d"}}, ["d"], ["A.'a.c'"]),
     #
     # Numeric keys
     # --------
@@ -423,7 +423,7 @@ find_test_cases_with_auto_id = (
     #
     ("id", {"foo": "baz"}, ["`this`"]),
     ("foo.`this`.id", {"foo": "baz"}, ["foo"]),
-    ("foo.`this`.baz.id", {"foo": {"baz": 3}}, ["(foo.baz)"]),
+    ("foo.`this`.baz.id", {"foo": {"baz": 3}}, ["foo.baz"]),
     #
     # Indexes
     # -------
@@ -440,11 +440,11 @@ find_test_cases_with_auto_id = (
     # Children
     # --------
     #
-    ("foo.baz.id", {"foo": {"baz": 3}}, ["(foo.baz)"]),
-    ("foo.baz.id", {"foo": {"baz": [3]}}, ["(foo.baz)"]),
-    ("foo.baz.id", {"foo": {"id": "bizzle", "baz": 3}}, ["(bizzle.baz)"]),
-    ("foo.baz.id", {"foo": {"baz": {"id": "hi"}}}, ["(foo.hi)"]),
-    ("foo.baz.bizzle.id", {"foo": {"baz": {"bizzle": 5}}}, ["((foo.baz).bizzle)"]),
+    ("foo.baz.id", {"foo": {"baz": 3}}, ["foo.baz"]),
+    ("foo.baz.id", {"foo": {"baz": [3]}}, ["foo.baz"]),
+    ("foo.baz.id", {"foo": {"id": "bizzle", "baz": 3}}, ["bizzle.baz"]),
+    ("foo.baz.id", {"foo": {"baz": {"id": "hi"}}}, ["foo.hi"]),
+    ("foo.baz.bizzle.id", {"foo": {"baz": {"bizzle": 5}}}, ["foo.baz.bizzle"]),
     #
     # Descendants
     # -----------
@@ -452,7 +452,7 @@ find_test_cases_with_auto_id = (
     (
         "foo..baz.id",
         {"foo": {"baz": 1, "bing": {"baz": 2}}},
-        ["(foo.baz)", "((foo.bing).baz)"],
+        ["foo.baz", "foo.bing.baz"],
     ),
 )
 
@@ -473,9 +473,9 @@ def test_find_full_paths_auto_id(auto_id_field, parse):
 @pytest.mark.parametrize(
     "string, target",
     (
-        ("m.[1].id", ["(('1'.m).a2id)"]),
-        ("m.[1].$.b.id", ["('1'.bid)"]),
-        ("m.[0].id", ["(('1'.m).[0])"]),
+        ("m.[1].id", ["'1'.m.a2id"]),
+        ("m.[1].$.b.id", ["'1'.bid"]),
+        ("m.[0].id", ["'1'.m.[0]"]),
     ),
 )
 @parsers
