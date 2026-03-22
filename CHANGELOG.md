@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Fix broken `Slice` serialization behavior.
+
+  Previously, a slice like `[0:]` would serialize to `[]`,
+  and a slice like `[::2]` would serialize to `[:2]`.
+
 ## [1.8.0] - 2026-02-24
 
 ### Added

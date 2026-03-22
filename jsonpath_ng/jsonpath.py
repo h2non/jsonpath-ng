@@ -847,12 +847,20 @@ class Slice(JSONPath):
         return data
 
     def __str__(self):
-        if self.start is None and self.end is None and self.step is None:
-            return '[*]'
-        else:
-            return '[%s%s%s]' % (self.start or '',
-                                   ':%d'%self.end if self.end else '',
-                                   ':%d'%self.step if self.step else '')
+        elements = []
+
+        for i, element in enumerate((self.start, self.end, self.step)):
+            if element is None:
+                continue
+            # Ensure that `elements` contains `i` elements, then append `element`.
+            elements.extend([""] * (i - len(elements)))
+            elements.append(str(element))
+
+        # If only `start` is present, add a blank element to ensure a trailing ':'.
+        if len(elements) == 1:
+            elements.append("")
+
+        return f'[{":".join(elements) or "*"}]'
 
     def __repr__(self):
         return '%s(start=%r,end=%r,step=%r)' % (self.__class__.__name__, self.start, self.end, self.step)
