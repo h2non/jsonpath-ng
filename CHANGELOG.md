@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   where `*` matched a dict value); it now matches nothing, as the docstring
   promises ([#93](https://github.com/jsonpath-ng/jsonpath-ng/issues/93))
 - Fix extended parser handling of field names that start with `true` or `false`.
+- Fix broken `Slice` serialization behavior.
+
+  Previously, a slice like `[0:]` would serialize to `[]`,
+  and a slice like `[::2]` would serialize to `[:2]`.
 
 ### Removed
 - Drop support for Python 3.10.
