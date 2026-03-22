@@ -320,8 +320,7 @@ class Child(JSONPath):
         if isinstance(self.right, SortedThis):
             return f"{self.left}{self.right}"
 
-        # Parentheses are required to ensure precedence.
-        return f"({self.left}.{self.right})"
+        return f"{self.left}.{self.right}"
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.left, self.right)
