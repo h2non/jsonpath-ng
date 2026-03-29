@@ -6,3 +6,8 @@ filterwarnings = [
     # The ply package doesn't close its debug log file. Ignore this warning.
     "ignore::ResourceWarning",
 ]
+
+[tool.codespell]
+skip = '.git,.gitignore,.gitattributes,*.pdf,*.svg,*.css,*.min.*,_ply'
+check-hidden = true
+ignore-words-list = 'nd'
