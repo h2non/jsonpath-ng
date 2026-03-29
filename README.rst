@@ -223,7 +223,7 @@ To use the extensions below you must import from `jsonpath_ng.ext`.
 | split        | - ``$.field.`split(+, 2, -1)```               |
 |              | - ``$.field.`split(",", *, -1)```             |
 |              | - ``$.field.`split(' ', -1, -1)```            |
-|              | - ``$.field.`split(sep, segment, maxsplit)```|
+|              | - ``$.field.`split(sep, segment, maxsplit)``` |
 +--------------+-----------------------------------------------+
 | sorted       | - ``$.objects.`sorted```                      |
 |              | - ``$.objects[\\some_field]``                 |
