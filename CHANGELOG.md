@@ -1,17 +1,27 @@
+All notable changes to this project will be documented in this file.
+Past changes are listed in [History.md](History.md).
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
 ## [Unreleased]
 
-## Added
+## [1.8.0] - 2026-02-24
+
+### Added
 - Support Python 3.13 and 3.14
 - Typing for IDE autocomplete
 - Support for EMOJI and CJK Unicode
 - Support for `DatumInContext` in-place updating
 - Support equality checking of `Operation` instances
 - Support string serialization of `Union` and `Intersect` instances
+- Support comma-separated indices
+- Add typings for IDE autocomplete
 
-## Changed
+### Changed
 - Rename `ExtentedJsonPathParser`
+- Remove ply dependency
 
-## Fixed
+### Fixed
 - Fix `False` and `None` values
 - Fix single constant case
 - Update field filter to resolve wildcard path issue
@@ -28,8 +38,10 @@
 - Fix parsing and string serialization of numeric-only identifiers.
   This fixes parsing of `10`, which was parsed as two separate fields.
 - Fix equality checks for `SortedThis` instances.
+- Fix bool filter type to handle None values
 
-## Removed
+### Removed
 - Python 3.8 and 3.9 no longer supported
 
-[Unreleased]: https://github.com/h2non/jsonpath-ng/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/h2non/jsonpath-ng/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/h2non/jsonpath-ng/compare/v1.7.0...v1.8.0
