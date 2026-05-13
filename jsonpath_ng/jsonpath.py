@@ -726,7 +726,7 @@ class Index(JSONPath):
         rv = []
         for index in self.indices:
             # invalid indices do not crash, return [] instead
-            if datum.value and len(datum.value) > index:
+            if datum.value and -len(datum.value) <= index < len(datum.value):
                 rv += [DatumInContext(datum.value[index], path=Index(index), context=datum)]
         return rv
 
