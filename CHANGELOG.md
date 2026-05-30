@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- `str()` of an `Index` with multiple comma-separated indices (e.g. `[0,1]`) no longer raises `TypeError`
+
 ## [1.8.0] - 2026-02-24
 
 ### Added
