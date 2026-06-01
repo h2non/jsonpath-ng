@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Fix extended parser handling of field names that start with `true` or `false`.
+
 ## [1.8.0] - 2026-02-24
 
 ### Added
