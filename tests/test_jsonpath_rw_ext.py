@@ -485,6 +485,18 @@ test_cases = (
         id="boolean-filter-string-true-string-literal",
     ),
     pytest.param(
+        "false_positives",
+        {"problems_detected": 4, "false_positives": 2},
+        [2],
+        id="field-starting-with-false",
+    ),
+    pytest.param(
+        "trueName",
+        {"trueName": "value"},
+        ["value"],
+        id="field-starting-with-true",
+    ),
+    pytest.param(
         "foo[?flag = true].color",
         {
             "foo": [
