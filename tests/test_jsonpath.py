@@ -243,6 +243,9 @@ find_test_cases = (
     ("[5]", [42], [], []),
     ("[2]", [34, 65, 29, 59], [29], ["[2]"]),
     ("[0]", None, [], []),
+    # Indexing a dict matches nothing rather than raising KeyError (issue #93)
+    ("[0]", {"foo": 1}, [], []),
+    ("$.*[0].b", {"a": [{"b": 1}], "c": {"d": 2}}, [1], ["((a.[0]).b)"]),
     #
     # Slices
     # ------
