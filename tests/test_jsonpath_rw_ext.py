@@ -512,3 +512,14 @@ def test_invalid_hyphenation_in_key():
     # This discrepancy needs to be resolved.
     with pytest.raises(JsonPathParserError):
         parser.parse("foo.-baz")
+
+
+def test_filter_on_dict():
+    # Filtering a dict must delete the matching key/value pairs, not crash.
+    data = {
+        "alice": {"score": 10},
+        "bob": {"score": -5},
+        "carol": {"score": -1},
+    }
+    parser.parse("$[?(@.score < 0)]").filter(lambda v: True, data)
+    assert data == {"alice": {"score": 10}}

@@ -59,7 +59,7 @@ class Filter(JSONPath):
         for datum in reversed(self.find(data)):
             index_obj = datum.path
             if isinstance(data, dict):
-                index_obj.index = list(data)[index_obj.index]
+                index_obj.indices = [list(data)[i] for i in index_obj.indices]
             index_obj.filter(fn, data)
         return data
 
