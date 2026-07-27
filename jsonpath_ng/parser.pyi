@@ -3,15 +3,15 @@ from __future__ import annotations
 import logging as logging
 import os as os
 import sys as sys
+import types
 from collections.abc import Callable, Iterable
 from typing import ClassVar, Protocol
 
-from . import _ply as jsonpath_ng
 from .jsonpath import *
 from .lexer import JsonPathLexer as JsonPathLexer, _LexToken
 from .exceptions import JsonPathParserError as JsonPathParserError
 
-logger: logging.Logger  # type: ignore[no-redef]
+jsonpath_ng: types.ModuleType
 
 class _Production(Protocol):
     def __len__(self) -> int: ...

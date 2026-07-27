@@ -17,7 +17,7 @@ matches = path.find(document)
 assert_type(matches, list[DatumInContext[object]])
 assert_type(
     Root().find(document),
-    list[DatumInContext[dict[str, list[dict[str, object]]]]],
+    list[DatumInContext[object]],
 )
 assert_type(Index(0).update(document["items"], {"name": "updated"}), list[dict[str, object]])
 assert_type(

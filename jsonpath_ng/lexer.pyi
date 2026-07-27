@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging as logging
 import sys as sys
+import types
 from collections.abc import Iterator
 from typing import ClassVar, Protocol
 
-from . import _ply as jsonpath_ng
 from .exceptions import JsonPathLexerError as JsonPathLexerError
 
+jsonpath_ng: types.ModuleType
 logger: logging.Logger
 
 class _LexerState(Protocol):
