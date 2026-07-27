@@ -15,6 +15,8 @@ assert_type(ext_parse("$.items[?score >= 2].name"), JSONPath)
 
 matches = path.find(document)
 assert_type(matches, list[DatumInContext[object]])
+datum = DatumInContext("before")
+datum.value = "after"
 assert_type(
     Root().find(document),
     list[DatumInContext[object]],
