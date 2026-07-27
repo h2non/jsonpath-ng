@@ -1,0 +1,4 @@
+# jsonpath_ng._ply is vendored and intentionally outside the bundled stub surface.
+jsonpath_ng\._ply\.__all__
+jsonpath_ng\._ply\.lex
+jsonpath_ng\._ply\.yacc
