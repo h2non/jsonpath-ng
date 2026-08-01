@@ -188,6 +188,60 @@ def test_update(parse: Callable[[str], JSONPath], expression: str, data, update_
     assert data_copy2 == expected_value
 
 
+@parsers
+def test_update_with_inplace_callback(parse: Callable[[str], JSONPath]):
+    """Regression test for #163: update() with an in-place callback that
+    returns None should not overwrite the field with None."""
+
+    def lowercase_inplace(orig, data, field):
+        data[field] = data[field].lower()
+        # intentionally returns None
+
+    data = {
+        'Data_cat': {
+            'data_entry': [
+                {'value': 0, 'UPPERCASE': 'UPPERCASE_A'},
+                {'value': 2, 'UPPERCASE': 'UPPERCASE_B'},
+            ]
+        }
+    }
+    parse('$..UPPERCASE').update(data, lowercase_inplace)
+    assert data == {
+        'Data_cat': {
+            'data_entry': [
+                {'value': 0, 'UPPERCASE': 'uppercase_a'},
+                {'value': 2, 'UPPERCASE': 'uppercase_b'},
+            ]
+        }
+    }
+
+
+@parsers
+def test_update_with_returning_callback(parse: Callable[[str], JSONPath]):
+    """Ensure callbacks that return a value still work correctly."""
+
+    def lowercase_return(orig, data, field):
+        return orig.lower()
+
+    data = {
+        'Data_cat': {
+            'data_entry': [
+                {'value': 0, 'UPPERCASE': 'UPPERCASE_A'},
+                {'value': 2, 'UPPERCASE': 'UPPERCASE_B'},
+            ]
+        }
+    }
+    parse('$..UPPERCASE').update(data, lowercase_return)
+    assert data == {
+        'Data_cat': {
+            'data_entry': [
+                {'value': 0, 'UPPERCASE': 'uppercase_a'},
+                {'value': 2, 'UPPERCASE': 'uppercase_b'},
+            ]
+        }
+    }
+
+
 filter_test_cases = (
     # Docs examples
     ("foo[*].baz", {'foo': [{'baz': 1}, {'baz': 2}]}, lambda d: True, {'foo': [{}, {}]}),

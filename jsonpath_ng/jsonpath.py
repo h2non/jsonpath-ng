@@ -664,7 +664,9 @@ class Fields(JSONPath):
                     data[field] = {}
                 if type(data) is not bool and field in data:
                     if hasattr(val, '__call__'):
-                        data[field] = val(data[field], data, field)
+                        val_result = val(data[field], data, field)
+                        if val_result is not None:
+                            data[field] = val_result
                     else:
                         data[field] = val
         return data
@@ -743,7 +745,9 @@ class Index(JSONPath):
             self._pad_value(data)
         if hasattr(val, '__call__'):
             for index in self.indices:
-                val.__call__(data[index], data, index)
+                val_result = val.__call__(data[index], data, index)
+                if val_result is not None:
+                    data[index] = val_result
         else:
             for index in self.indices:
                 if len(data) > index:
