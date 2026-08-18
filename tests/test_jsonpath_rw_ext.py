@@ -497,6 +497,12 @@ test_cases = (
         ["blue"],
         id="boolean-filter-with-null",
     ),
+    pytest.param(
+        "foo[?(@.v = 0)].k",
+        {"foo": [{"k": "A", "v": 0.0}, {"k": "B", "v": 0.6}, {"k": "C", "v": 0}]},
+        ["A", "C"],
+        id="issue-227-int-no-float-truncation",
+    ),
 )
 
 
