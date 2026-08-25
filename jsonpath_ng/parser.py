@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 def parse(string):
-    return JsonPathParser().parse(string)
+    path = JsonPathParser().parse(string)
+    path._source_expr = string
+    return path
 
 
 class JsonPathParser:

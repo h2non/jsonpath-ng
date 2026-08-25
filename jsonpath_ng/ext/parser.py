@@ -175,4 +175,6 @@ class ExtendedJsonPathParser(parser.JsonPathParser):
 ExtentedJsonPathParser = ExtendedJsonPathParser
 
 def parse(path, debug=False):
-    return ExtendedJsonPathParser(debug=debug).parse(path)
+    result = ExtendedJsonPathParser(debug=debug).parse(path)
+    result._source_expr = path
+    return result
