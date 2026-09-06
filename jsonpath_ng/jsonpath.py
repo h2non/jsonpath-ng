@@ -270,6 +270,15 @@ class Child(JSONPath):
         self.left = left
         self.right = right
 
+    @staticmethod
+    def _prepare_for_create(datum):
+        if datum.value is None:
+            # A null intermediate cannot contain the remaining path. Treat it
+            # like a missing intermediate and let the next path segment choose
+            # whether the placeholder becomes a mapping or a list.
+            datum.value = {}
+        return datum
+
     def find(self, datum):
         """
         Extra special case: auto ids do not have children,
@@ -294,12 +303,14 @@ class Child(JSONPath):
                 # Extra special case: auto ids do not have children,
                 # so cut it off right now rather than auto id the auto id
                 continue
+            subdata = self._prepare_for_create(subdata)
             for submatch in self.right.find_or_create(subdata):
                 submatches.append(submatch)
         return submatches
 
     def update_or_create(self, data, val):
         for datum in self.left.find_or_create(data):
+            datum = self._prepare_for_create(datum)
             self.right.update_or_create(datum.value, val)
         return _clean_list_keys(data)
 
