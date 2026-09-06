@@ -14,7 +14,7 @@
 import operator
 import re
 
-from .. import JSONPath, DatumInContext, Index
+from .. import JSONPath, DatumInContext, Fields, Index
 
 
 OPERATOR_MAP = {
@@ -42,25 +42,28 @@ class Filter(JSONPath):
         datum = DatumInContext.wrap(datum)
 
         if isinstance(datum.value, dict):
-            datum.value = list(datum.value.values())
-
-        if not isinstance(datum.value, list):
+            candidates = [
+                DatumInContext(value, path=Fields(key), context=datum)
+                for key, value in datum.value.items()
+            ]
+        elif isinstance(datum.value, list):
+            candidates = [
+                DatumInContext(value, path=Index(index), context=datum)
+                for index, value in enumerate(datum.value)
+            ]
+        else:
             return []
 
-        return [DatumInContext(datum.value[i], path=Index(i), context=datum)
-                for i in range(0, len(datum.value))
+        return [candidate for candidate in candidates
                 if (len(self.expressions) ==
-                    len(list(filter(lambda x: x.find(datum.value[i]),
+                    len(list(filter(lambda x: x.find(candidate.value),
                                     self.expressions))))]
 
     def filter(self, fn, data):
         # NOTE: We reverse the order just to make sure the indexes are preserved upon
         #  removal.
         for datum in reversed(self.find(data)):
-            index_obj = datum.path
-            if isinstance(data, dict):
-                index_obj.index = list(data)[index_obj.index]
-            index_obj.filter(fn, data)
+            datum.path.filter(fn, data)
         return data
 
     def update(self, data, val):
