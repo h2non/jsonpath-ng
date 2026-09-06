@@ -5,6 +5,9 @@ test_jsonpath_ng_ext
 Tests for `jsonpath_ng_ext` module.
 """
 
+import copy
+from types import MappingProxyType
+
 import pytest
 
 from jsonpath_ng.exceptions import JsonPathParserError
@@ -504,6 +507,54 @@ test_cases = (
 def test_values(path, data, expected_values):
     results = parser.parse(path).find(data)
     assert_value_equality(results, expected_values)
+
+
+def test_filter_find_does_not_mutate_mapping():
+    source = {
+        "objects": {
+            "first": {"score": 90},
+            "second": {"score": 50},
+        }
+    }
+    original = copy.deepcopy(source)
+
+    matches = parser.parse("$.objects[?(@.score >= 85)]").find(source)
+
+    assert [match.value for match in matches] == [{"score": 90}]
+    assert [str(match.full_path) for match in matches] == ["(objects.first)"]
+    assert source == original
+
+    matches[0].value = {"score": 95}
+    assert source["objects"] == {
+        "first": {"score": 95},
+        "second": {"score": 50},
+    }
+
+
+def test_filter_find_accepts_read_only_mapping():
+    source = MappingProxyType(
+        {
+            "objects": {
+                "first": {"score": 90},
+                "second": {"score": 50},
+            }
+        }
+    )
+
+    matches = parser.parse("$.objects[?(@.score >= 85)]").find(source)
+
+    assert [match.value for match in matches] == [{"score": 90}]
+
+
+def test_filter_removes_matching_mapping_entries():
+    source = {
+        "first": {"score": 90},
+        "second": {"score": 50},
+    }
+
+    parser.parse("$[?(@.score >= 85)]").filter(lambda _: True, source)
+
+    assert source == {"second": {"score": 50}}
 
 
 def test_invalid_hyphenation_in_key():
