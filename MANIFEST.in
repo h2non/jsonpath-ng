@@ -1,2 +1,3 @@
 recursive-include tests *.json *.py
 include LICENSE
+include jsonpath_ng/py.typed

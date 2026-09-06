@@ -16,6 +16,7 @@ setuptools.setup(
     license='Apache 2.0',
     long_description=io.open('README.rst', encoding='utf-8').read(),
     packages=['jsonpath_ng', 'jsonpath_ng.bin', 'jsonpath_ng.ext','jsonpath_ng._ply'],
+    package_data={'jsonpath_ng': ['py.typed']},
     entry_points={
         'console_scripts': [
             'jsonpath_ng=jsonpath_ng.bin.jsonpath:entry_point'
