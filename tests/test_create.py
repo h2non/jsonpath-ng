@@ -11,7 +11,9 @@ from jsonpath_ng.ext import parse
     (
         ("$.foo", {}, {"foo": 42}),
         ("$.foo.bar", {}, {"foo": {"bar": 42}}),
+        ("$.foo.bar", {"foo": None}, {"foo": {"bar": 42}}),
         ("$.foo[0]", {}, {"foo": [42]}),
+        ("$.foo[0]", {"foo": None}, {"foo": [42]}),
         ("$.foo[1]", {}, {"foo": [{}, 42]}),
         ("$.foo[0].bar", {}, {"foo": [{"bar": 42}]}),
         ("$.foo[1].bar", {}, {"foo": [{}, {"bar": 42}]}),
@@ -46,6 +48,26 @@ def test_update_or_create(string, initial_data, expected_result):
     jsonpath = parse(string)
     result = jsonpath.update_or_create(initial_data, 42)
     assert result == expected_result
+
+
+def test_find_or_create_replaces_null_intermediate_fields():
+    data = {"folder": {"document": None}}
+    jsonpath = parse("$.folder.document.doc_a.value")
+
+    matches = jsonpath.find_or_create(data)
+
+    assert [match.value for match in matches] == [{}]
+    assert data == {"folder": {"document": {"doc_a": {"value": {}}}}}
+
+
+@pytest.mark.parametrize("value", (False, 0, "", []))
+def test_update_or_create_does_not_replace_non_null_intermediates(value):
+    data = {"foo": value}
+
+    with pytest.raises(TypeError):
+        parse("$.foo.bar").update_or_create(data, 42)
+
+    assert data == {"foo": value}
 
 
 @pytest.mark.parametrize(

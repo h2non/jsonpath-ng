@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Allow `find_or_create` and `update_or_create` to create paths through null intermediate fields.
+
 ## [1.8.0] - 2026-02-24
 
 ### Added
