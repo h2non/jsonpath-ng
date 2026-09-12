@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Return no matches for negative array indices beyond the start of an array,
+  matching the behavior of out-of-range positive indices ([#203](https://github.com/h2non/jsonpath-ng/issues/203)).
+
 ## [1.8.0] - 2026-02-24
 
 ### Added
