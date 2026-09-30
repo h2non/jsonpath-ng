@@ -8,6 +8,6 @@ filterwarnings = [
 ]
 
 [tool.codespell]
-skip = '.git,.gitignore,.gitattributes,*.pdf,*.svg,*.css,*.min.*,_ply'
+skip = '.git,.gitignore,.gitattributes,*.pdf,*.svg,*.css,*.min.*,_ply,./.venv'
 check-hidden = true
 ignore-words-list = 'nd'
