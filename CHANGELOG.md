@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Fix extended filter equality against an integer literal truncating float values,
+  so `[?(@.v = 0)]` no longer matches an element with `v = 0.6` ([#227](https://github.com/h2non/jsonpath-ng/issues/227)).
+
 ## [1.8.0] - 2026-02-24
 
 ### Added
