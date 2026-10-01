@@ -12,6 +12,7 @@ import pytest
 
 from jsonpath_ng.exceptions import JsonPathParserError
 from jsonpath_ng.ext import parser
+from jsonpath_ng.ext.filter import Filter
 
 from .helpers import assert_value_equality
 
@@ -555,6 +556,25 @@ def test_filter_removes_matching_mapping_entries():
     parser.parse("$[?(@.score >= 85)]").filter(lambda _: True, source)
 
     assert source == {"second": {"score": 50}}
+
+
+def test_filter_stops_evaluating_after_first_failed_expression():
+    calls = []
+
+    class MatchesSecondValue:
+        def find(self, value):
+            calls.append(("first", value))
+            return [value] if value == 2 else []
+
+    class RecordsLaterExpression:
+        def find(self, value):
+            calls.append(("second", value))
+            return [value]
+
+    matches = Filter([MatchesSecondValue(), RecordsLaterExpression()]).find([1, 2, 3])
+
+    assert [match.value for match in matches] == [2]
+    assert calls == [("first", 1), ("first", 2), ("second", 2), ("first", 3)]
 
 
 def test_invalid_hyphenation_in_key():

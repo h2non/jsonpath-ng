@@ -42,22 +42,21 @@ class Filter(JSONPath):
         datum = DatumInContext.wrap(datum)
 
         if isinstance(datum.value, dict):
-            candidates = [
+            candidates = (
                 DatumInContext(value, path=Fields(key), context=datum)
                 for key, value in datum.value.items()
-            ]
+            )
         elif isinstance(datum.value, list):
-            candidates = [
+            candidates = (
                 DatumInContext(value, path=Index(index), context=datum)
                 for index, value in enumerate(datum.value)
-            ]
+            )
         else:
             return []
 
         return [candidate for candidate in candidates
-                if (len(self.expressions) ==
-                    len(list(filter(lambda x: x.find(candidate.value),
-                                    self.expressions))))]
+                if all(expression.find(candidate.value)
+                       for expression in self.expressions)]
 
     def filter(self, fn, data):
         # NOTE: We reverse the order just to make sure the indexes are preserved upon
