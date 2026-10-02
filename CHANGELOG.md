@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `update()` with an in-place callback returning `None` no longer overwrites the field with `None` (#163)
 - `Index.find` no longer raises `KeyError` when applied to a dict (e.g. `$.*[0]`
   where `*` matched a dict value); it now matches nothing, as the docstring
-  promises ([#93](https://github.com/h2non/jsonpath-ng/issues/93))
+  promises ([#93](https://github.com/jsonpath-ng/jsonpath-ng/issues/93))
 
 ## [1.8.0] - 2026-02-24
 
@@ -49,5 +49,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 - Python 3.8 and 3.9 no longer supported
 
-[Unreleased]: https://github.com/h2non/jsonpath-ng/compare/v1.8.0...HEAD
-[1.8.0]: https://github.com/h2non/jsonpath-ng/compare/v1.7.0...v1.8.0
+[Unreleased]: https://github.com/jsonpath-ng/jsonpath-ng/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/jsonpath-ng/jsonpath-ng/compare/v1.7.0...v1.8.0

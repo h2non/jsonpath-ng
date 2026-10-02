@@ -328,10 +328,9 @@ Contributors
 This package is authored and maintained by:
 
 -  `Kenn Knowles <https://github.com/kennknowles>`__
-   (`@kennknowles <https://twitter.com/KennKnowles>`__)
--  `Tomas Aparicio <https://github.com/h2non>`
+-  `Tomas Aparicio <https://github.com/h2non>`__
 
-with the help of patches submitted by `these contributors <https://github.com/kennknowles/python-jsonpath-ng/graphs/contributors>`__.
+with the help of patches submitted by `these contributors <https://github.com/jsonpath-ng/jsonpath-ng/graphs/contributors>`__.
 
 Copyright and License
 ---------------------
@@ -360,7 +359,7 @@ limitations under the License.
 
 .. |PyPi downloads| image:: https://pypip.in/d/jsonpath-ng/badge.png
    :target: https://pypi.python.org/pypi/jsonpath-ng
-.. |Build Status| image:: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/h2non/jsonpath-ng/actions/workflows/ci.yml
+.. |Build Status| image:: https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml
 .. |PyPI| image:: https://img.shields.io/pypi/v/jsonpath-ng.svg?maxAge=2592000?style=flat-square
    :target: https://pypi.python.org/pypi/jsonpath-ng
