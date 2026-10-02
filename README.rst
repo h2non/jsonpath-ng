@@ -4,7 +4,7 @@ Python JSONPath Next-Generation
 .. raw:: html
 
    <p>
-     <a href="https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml/badge.svg"><img src="https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml/badge.svg" alt="Build Status" /></a>
+     <a href="https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml"><img src="https://github.com/jsonpath-ng/jsonpath-ng/actions/workflows/ci.yml/badge.svg" alt="Build Status" /></a>
      <a href="https://pypi.python.org/pypi/jsonpath-ng"><img src="https://img.shields.io/pypi/v/jsonpath-ng.svg?maxAge=2592000?style=flat-square" alt="PyPI" /></a>
    </p>
 
