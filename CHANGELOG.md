@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Index.find` no longer raises `KeyError` when applied to a dict (e.g. `$.*[0]`
   where `*` matched a dict value); it now matches nothing, as the docstring
   promises ([#93](https://github.com/jsonpath-ng/jsonpath-ng/issues/93))
+- Fix extended parser handling of field names that start with `true` or `false`.
 
 ### Removed
 - Drop support for Python 3.10.
