@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Support Python 3.15.
+- Add a `py.typed` marker.
 
 ### Fixed
 - `update()` with an in-place callback returning `None` no longer overwrites the field with `None` (#163)

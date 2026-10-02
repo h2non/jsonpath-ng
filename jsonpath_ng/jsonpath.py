@@ -4,6 +4,8 @@ import logging
 from itertools import *  # noqa
 import re
 
+from jsonpath_ng.exceptions import JSONPathError
+
 # Get logger name
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ class JSONPath:
         """
         raise NotImplementedError()
 
-    def find_or_create(self, data):
+    def find_or_create(self, data) -> List[DatumInContext]:
         return self.find(data)
 
     def update(self, data, val):
@@ -180,6 +182,10 @@ class AutoIdForDatum(DatumInContext):
     @property
     def value(self):
         return str(self.datum.id_pseudopath)
+
+    @value.setter
+    def value(self, value):
+        raise JSONPathError("The value of an auto ID cannot be set.")
 
     @property
     def path(self):
