@@ -35,4 +35,4 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
     - name: Run tests
-      run: tox run -e py${{ matrix.python-version }}
+      run: tox run -e py${{ matrix.python-version }},mypy-py${{ matrix.python-version }}
