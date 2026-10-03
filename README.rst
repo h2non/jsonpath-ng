@@ -237,10 +237,10 @@ To use the extensions below you must import from `jsonpath_ng.ext`.
 |              | - ``$.objects[\\some_field]``                 |
 |              | - ``$.objects[\\some_field,/other_field]``    |
 +--------------+-----------------------------------------------+
-| filter       | - ``$.objects[?(@some_field > 5)]``           |
-|              | - ``$.objects[?some_field = "foobar"]``       |
-|              | - ``$.objects[?some_field =~ "foobar"]``      |
-|              | - ``$.objects[?some_field > 5 & other < 2]``  |
+| filter       | - ``$.objects[?(@.some_field > 5)]``            |
+|              | - ``$.objects[?(@.some_field = "foobar")]``     |
+|              | - ``$.objects[?(@.some_field =~ "foobar")]``    |
+|              | - ``$.objects[?(@.some_field > 5 & other < 2)]``|
 |              |                                               |
 |              | Supported operators:                          |
 |              | - Equality: ==, =, !=                         |
